@@ -90,7 +90,7 @@ High-level flow:
 ```
 Upload KiCad files
    -> /api/pcb/validate
-   -> LlamaIndex agent (Cerebras)
+   -> LlamaIndex agent (Ollama + RAG)
    -> Firmware plan + PRD summary + PCB render
    -> Download artifacts
 ```
