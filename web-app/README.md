@@ -1,15 +1,14 @@
-# 8090PCB Chat Interface
+# 8090PCB Validation Interface
 
-A modern web-based chat interface for PCB design that integrates with KiCad MCP (Model Context Protocol) to generate CAD files and design specifications.
+A modern web-based validation UI that integrates with KiCad MCP (Model Context Protocol) to analyze uploaded KiCad designs, generate a validation report, and produce a firmware bring-up plan with per-component technical notes.
 
 ## Features
 
-- 🎨 **Modern Chat UI** - Clean, responsive interface built with React and Tailwind CSS
-- 🔌 **MCP Integration** - Seamless integration with KiCad MCP server
-- 📁 **File Generation** - Automatically generates KiCad PCB files and design descriptions
-- 📥 **Easy Download** - Download generated files directly from the chat interface
-- 💾 **Conversation History** - Track your design requests and responses
-- 🚀 **Fast & Responsive** - Built with Vite for lightning-fast development and builds
+- **Validation Workflow** - Upload .kicad_pro/.kicad_pcb/.kicad_sch and receive a structured report
+- **MCP Integration** - Uses KiCad MCP tools for DRC, boundary checks, netlist extraction, and pattern analysis
+- **Firmware Plan** - Generates a bring-up plan and per-component firmware tasks
+- **Component Notes** - Technical descriptions for each component in the design
+- **Fast UI** - React + Vite + Tailwind for responsive UX
 
 ## Project Structure
 
@@ -18,9 +17,10 @@ web-app/
 ├── frontend/              # React + Vite frontend application
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── ChatInterface.jsx    # Main chat component
-│   │   │   ├── ChatMessage.jsx      # Individual message component
-│   │   │   └── FileCard.jsx         # File download card component
+│   │   │   ├── PcbValidator.jsx     # Main validation workflow UI
+│   │   │   ├── FileCard.jsx         # File download card component
+│   │   │   ├── ChatInterface.jsx    # Legacy chat component (optional)
+│   │   │   └── ChatMessage.jsx      # Legacy chat message component
 │   │   ├── services/
 │   │   │   └── api.js               # API client service
 │   │   ├── App.jsx                  # Root component
@@ -34,10 +34,13 @@ web-app/
 │
 └── backend/               # Node.js + Express backend server
     ├── routes/
-    │   ├── chat.js                  # Chat endpoints
+    │   ├── pcb.js                   # PCB validation upload endpoint
+    │   ├── chat.js                  # Legacy chat endpoints
     │   └── files.js                 # File download endpoints
     ├── services/
-    │   └── mcpClient.js             # KiCad MCP client
+    │   ├── mcpBridge.js             # MCP stdio client bridge
+    │   ├── pcbValidator.js          # Validation pipeline
+    │   └── mcpClient.js             # Legacy chat MCP client
     ├── generated/                   # Generated PCB files
     ├── uploads/                     # Uploaded file storage
     ├── server.js                    # Express server setup
@@ -75,7 +78,8 @@ cp .env.example .env
 ```env
 PORT=3001
 KICAD_MCP_SERVER_PATH=../../main.py
-KICAD_PROJECT_PATH=/path/to/your/kicad/project
+# Optional: specify Python executable for the MCP server
+KICAD_MCP_PYTHON=/path/to/python
 NODE_ENV=development
 ```
 
@@ -142,43 +146,32 @@ npm run preview
 
 ## API Endpoints
 
-### Chat API
+### PCB Validation API
 
-**POST /api/chat/message**
-- Send a chat message and generate PCB design
-- Request body:
-  ```json
-  {
-    "message": "Design a blinking LED circuit",
-    "conversationId": "conv_123456" // optional
-  }
-  ```
-- Response:
+**POST /api/pcb/validate**
+- Upload KiCad files and return validation output.
+- Content type: `multipart/form-data`
+- Field name: `files` (multiple)
+- Recommended files: `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`
+- Response (summary):
   ```json
   {
     "success": true,
-    "conversationId": "conv_123456",
-    "response": {
-      "role": "assistant",
-      "content": "PCB design generated successfully",
-      "files": {
-        "cad": "design_1234567890.kicad_pcb",
-        "description": "design_1234567890_description.md"
+    "validationId": "validation_123456",
+    "summary": {
+      "status": "issues",
+      "counts": {
+        "components": 42,
+        "drcViolations": 3
       }
     },
-    "history": [...]
+    "files": {
+      "report": "validation_123456_report.md",
+      "firmwarePlan": "validation_123456_firmware_plan.md",
+      "components": "validation_123456_components.md"
+    }
   }
   ```
-
-**GET /api/chat/history/:conversationId**
-- Retrieve conversation history
-- Response: Array of messages with timestamps
-
-**DELETE /api/chat/history/:conversationId**
-- Clear conversation history
-
-**GET /api/chat/tools**
-- List available MCP tools
 
 ### File API
 
@@ -202,41 +195,39 @@ npm run preview
 
 ## Usage
 
-1. **Open the Chat Interface**
+1. **Open the Validation UI**
    - Navigate to http://localhost:3000
 
-2. **Describe Your PCB Design**
-   - Type your design requirements in the input field
-   - Example: "Design a 555 timer astable oscillator for a 1kHz square wave"
+2. **Upload KiCad Files**
+   - Drag and drop `.kicad_pro`, `.kicad_pcb`, and `.kicad_sch`
+   - The project file enables DRC, boundary checks, and full netlist extraction
 
-3. **Generate Design**
-   - Click "Send" to generate the PCB design
-   - The AI will process your request via the KiCad MCP server
+3. **Run Validation**
+   - Click "Validate PCB"
+   - The backend runs MCP tools and generates reports
 
-4. **Download Files**
-   - Two files are generated:
-     - **CAD File** (.kicad_pcb) - Direct import into KiCad
-     - **Description** (.md) - Design specification for PM tools
-
-5. **Review & Export**
-   - Download files and open the PCB in KiCad
-   - Share the description with your PM tool
+4. **Download Outputs**
+   - **Validation Report** (.md)
+   - **Firmware Plan** (.md)
+   - **Component Notes** (.md)
+   - **Summary JSON** (.json)
 
 ## Generated Files
 
-### CAD Files (.kicad_pcb)
-- Standard KiCad PCB format
-- Fully compatible with KiCad 7.0+
-- Ready for further editing and manufacturing
+### Validation Report (.md)
+- DRC summary, boundary checks, and circuit pattern overview
+- Includes key issues and remediation notes
 
-### Design Descriptions (.md)
-- Markdown format for easy viewing
-- Includes:
-  - Design specifications
-  - Component placement
-  - Board properties
-  - Manufacturing notes
-  - Metadata for PM integration
+### Firmware Plan (.md)
+- Phased bring-up plan with MCU and interface tasks
+- Per-component firmware action list
+
+### Component Notes (.md)
+- Technical description per component
+- Firmware-facing considerations
+
+### Summary JSON (.json)
+- Machine-readable version of validation outputs
 
 ## Environment Variables
 
@@ -247,30 +238,12 @@ PORT=3001
 # Path to KiCad MCP server (relative to backend directory)
 KICAD_MCP_SERVER_PATH=../../main.py
 
-# Path to your KiCad project directory
-KICAD_PROJECT_PATH=/path/to/your/kicad/project
+# Optional: Python executable for the MCP server
+KICAD_MCP_PYTHON=/path/to/python
 
 # Environment mode
 NODE_ENV=development
 ```
-
-## Integration with PM Software
-
-The generated design description files are formatted specifically for integration with Project Management tools:
-
-1. **File Format**: Standard Markdown (.md) - Compatible with most PM tools
-2. **Content Structure**: 
-   - Design ID for tracking
-   - Technical specifications
-   - Component list
-   - Manufacturing requirements
-   - Metadata and timestamps
-
-3. **Workflow**:
-   ```
-   Chat Interface → Generate Files → Download Description
-   → PM Tool (Jira, Linear, etc.) → Create PRD
-   ```
 
 ## Troubleshooting
 
@@ -287,10 +260,11 @@ The generated design description files are formatted specifically for integratio
 - Update `KICAD_MCP_SERVER_PATH` in `.env`
 - Ensure Python 3.8+ is installed
 
-### File Generation Issues
+### Validation Output Issues
 
-**Error: "Failed to generate PCB file"**
-- Check KICAD_PROJECT_PATH is valid
+**Error: "Failed to validate design"**
+- Ensure KiCad MCP server can launch from `KICAD_MCP_SERVER_PATH`
+- Verify Python dependencies for the MCP server are installed
 - Ensure write permissions in `web-app/backend/generated/`
 - Review browser console and server logs for details
 
@@ -319,10 +293,10 @@ lsof -ti:3001 | xargs kill -9
 
 ### Modifying MCP Integration
 
-Edit `backend/services/mcpClient.js` to:
+Edit `backend/services/mcpBridge.js` and `backend/services/pcbValidator.js` to:
 - Change how requests are sent to the MCP server
 - Add new MCP tool support
-- Customize file generation logic
+- Customize validation logic and report generation
 
 ## Performance Optimization
 
