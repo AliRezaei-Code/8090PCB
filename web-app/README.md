@@ -56,6 +56,8 @@ ollama pull qwen3-embedding:0.6b
 ollama pull sam860/qwen3-reranker:0.6b-F16
 ```
 
+The STM32 firmware reference PDFs live in `web-app/stm32` and are used for RAG.
+
 ## Running the app
 
 Terminal 1 (backend):
