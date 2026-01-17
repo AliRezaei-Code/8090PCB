@@ -37,7 +37,7 @@ const upload = multer({
 
 /**
  * POST /api/pcb/validate
- * Upload KiCad files and generate validation + firmware plan outputs.
+ * Upload KiCad files and generate firmware plan + PRD summary outputs.
  *
  * Expected form-data:
  * - files: one or more files (recommended: .kicad_pro + .kicad_sch + .kicad_pcb)
@@ -58,11 +58,10 @@ router.post('/validate', upload.array('files'), async (req, res) => {
   } catch (error) {
     console.error('PCB validation error:', error);
     res.status(500).json({
-      error: 'Failed to validate design',
+      error: 'Failed to generate plan',
       message: error.message,
     });
   }
 });
 
 export default router;
-
