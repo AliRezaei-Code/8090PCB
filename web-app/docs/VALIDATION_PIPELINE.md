@@ -22,6 +22,7 @@ The LlamaIndex agent receives:
 
 - Raw KiCad file content (size-limited)
 - File metadata (names, sizes, extensions)
+- STM32 reference PDFs from `web-app/stm32`
 
 It returns a firmware plan (phases + per-component tasks when possible) and a PRD summary.
 
