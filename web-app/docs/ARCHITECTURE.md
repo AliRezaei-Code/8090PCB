@@ -45,9 +45,15 @@ Browser
   - Drag and drop upload UI
   - Validation status cards and summaries
   - Download links for output artifacts
+  - Framer Motion transitions for section reveals and list items
 
 - `web-app/frontend/src/services/api.js`
   - `validatePcb()` handles multipart upload
+
+## UX layer
+
+- Motion: Framer Motion is used for staggered entrance, hover lift, and drag feedback.
+- Favicon: `web-app/frontend/public/favicon.svg` is linked in `web-app/frontend/index.html`.
 
 ## Storage
 

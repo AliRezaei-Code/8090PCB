@@ -13,6 +13,7 @@ A web-based validation UI that integrates with the KiCad MCP server to analyze u
 - Outputs
 - API
 - Configuration
+- UI and motion
 - Deployment
 - Troubleshooting
 - Legacy chat interface
@@ -195,6 +196,17 @@ NODE_ENV=development
 Frontend environment variables:
 
 - `VITE_API_URL` (default: `http://localhost:3001/api`)
+
+## UI and motion
+
+The validator UI uses Framer Motion for subtle, premium animations:
+
+- Page-load stagger for major sections
+- Upload zone spring/glow on drag
+- Result reveal with enter transitions
+- Hover lift on stat cards and downloads
+
+The custom favicon lives at `web-app/frontend/public/favicon.svg`.
 
 ## Deployment
 

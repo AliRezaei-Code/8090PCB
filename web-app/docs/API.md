@@ -93,3 +93,12 @@ List all generated files:
 ## Legacy endpoints
 
 - `/api/chat/*` remains for the older chat UI but is not used by the validator.
+
+## Frontend dependency note
+
+The validator UI uses `framer-motion` for animations. If you update `web-app/frontend/package.json`, run:
+
+```bash
+cd web-app/frontend
+npm install
+```
