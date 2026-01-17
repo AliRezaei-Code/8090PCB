@@ -136,7 +136,7 @@ ${safeRequest}
 - \`${designId}_description.md\`
 
 ## Notes
-This is a mock design output for the 8090PCB web UI. Configure \`web-app/backend/.env\` (\`KICAD_MCP_SERVER_PATH\`, \`KICAD_PROJECT_PATH\`) to connect to a real KiCad MCP server.
+This is a mock design output for the 8090PCB web UI. Configure \`web-app/backend/.env\` (\`KICAD_MCP_SERVER_PATH\`, optional \`KICAD_MCP_PYTHON\`) to connect to a real KiCad MCP server.
 `;
   }
 
