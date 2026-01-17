@@ -20,14 +20,35 @@ SYSTEM_CHAT_PROMPT = (
     "checklist."
 )
 
-SYSTEM_VALIDATION_PROMPT = (
-    "You generate short, structured summaries for KiCad validation output. Return JSON only, "
-    "no extra text. Use this schema:\n"
+SYSTEM_FIRMWARE_PROMPT = (
+    "You are an expert embedded systems lead. Analyze raw KiCad files and metadata to produce "
+    "a firmware implementation plan and a PRD-ready summary. Use only the provided context. "
+    "If information is missing, state assumptions explicitly in notes. Return JSON only, no "
+    "extra text. Follow this schema exactly:\n"
     "{\n"
-    '  "summary_notes": ["note1", "note2"],\n'
-    '  "firmware_overview": "one short paragraph"\n'
+    '  "notes": ["assumption or caveat"],\n'
+    '  "firmware_plan": {\n'
+    '    "overview": "short paragraph",\n'
+    '    "phases": [\n'
+    '      {"phase": "Phase name", "tasks": ["task 1", "task 2"]}\n'
+    "    ],\n"
+    '    "per_component": [\n'
+    '      {"reference": "U1", "role": "MCU", "tasks": ["task 1"]}\n'
+    "    ]\n"
+    "  },\n"
+    '  "prd_summary": {\n'
+    '    "product_brief": "2-4 sentences",\n'
+    '    "functional_requirements": ["req 1", "req 2"],\n'
+    '    "nonfunctional_requirements": ["req 1"],\n'
+    '    "risks": ["risk 1"],\n'
+    '    "milestones": ["milestone 1"]\n'
+    "  }\n"
     "}\n"
-    "Keep summary_notes to 3-6 bullets max, and be factual based on the context."
+    "Rules:\n"
+    "- Use technical language appropriate for a firmware team.\n"
+    "- Extract component references when possible (U1, J2, etc.).\n"
+    "- If you cannot infer components, leave per_component empty and add a note.\n"
+    "- Keep tasks concrete and implementation-focused."
 )
 
 
@@ -97,11 +118,11 @@ def extract_json(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def run_validation(llm: OpenAI, payload: Dict[str, Any]) -> Dict[str, Any]:
+def run_firmware(llm: OpenAI, payload: Dict[str, Any]) -> Dict[str, Any]:
     context = payload.get("context", {})
     compact = json.dumps(context, ensure_ascii=True)
     messages = [
-        ChatMessage(role="system", content=SYSTEM_VALIDATION_PROMPT),
+        ChatMessage(role="system", content=SYSTEM_FIRMWARE_PROMPT),
         ChatMessage(
             role="user",
             content=(
@@ -124,8 +145,8 @@ def main() -> None:
     mode = str(payload.get("mode", "chat")).lower()
     llm = build_llm()
 
-    if mode == "validation":
-        result = run_validation(llm, payload)
+    if mode == "firmware":
+        result = run_firmware(llm, payload)
     else:
         result = run_chat(llm, payload)
 
