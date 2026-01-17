@@ -63,7 +63,7 @@ class ApiService {
   }
 
   /**
-   * Get available MCP tools
+   * Get available tools (legacy)
    */
   async getTools() {
     const response = await this.client.get('/chat/tools');
@@ -71,7 +71,7 @@ class ApiService {
   }
 
   /**
-   * Validate a PCB design upload
+   * Generate a firmware plan from KiCad uploads
    */
   async validatePcb(files) {
     const formData = new FormData();
