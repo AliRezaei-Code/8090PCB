@@ -39,9 +39,6 @@ function parseAgentOutput(output) {
 }
 
 export async function runAgent(payload) {
-  if (!process.env.CEREBRAS_API_KEY) {
-    throw new Error('CEREBRAS_API_KEY is not set');
-  }
 
   const timeoutMs = Number(process.env.LLAMA_AGENT_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
   const pythonCommand = getPythonCommand();
