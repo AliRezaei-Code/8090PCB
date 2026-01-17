@@ -77,6 +77,10 @@ router.get('/:filename', async (req, res) => {
       contentType = 'text/markdown';
     } else if (filename.endsWith('.json')) {
       contentType = 'application/json';
+    } else if (filename.endsWith('.svg')) {
+      contentType = 'image/svg+xml';
+    } else if (filename.endsWith('.png')) {
+      contentType = 'image/png';
     }
 
     res.setHeader('Content-Type', contentType);
