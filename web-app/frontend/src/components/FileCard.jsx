@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, FileText, File, FileJson } from 'lucide-react';
+import { Download, FileText, File, FileJson, Image } from 'lucide-react';
 import api from '../services/api';
 
 const FileCard = ({ filename, designId, type }) => {
@@ -18,6 +18,9 @@ const FileCard = ({ filename, designId, type }) => {
     if (filename.endsWith('.json')) {
       return <FileJson className="w-6 h-6 text-purple-400" />;
     }
+    if (filename.endsWith('.svg') || filename.endsWith('.png')) {
+      return <Image className="w-6 h-6 text-purple-300" />;
+    }
     return <File className="w-6 h-6 text-purple-300" />;
   };
 
@@ -31,6 +34,9 @@ const FileCard = ({ filename, designId, type }) => {
     if (filename.endsWith('_firmware_plan.md')) {
       return 'Firmware Plan';
     }
+    if (filename.endsWith('_prd.md')) {
+      return 'PRD Summary';
+    }
     if (filename.endsWith('_components.md')) {
       return 'Component Reference';
     }
@@ -38,7 +44,13 @@ const FileCard = ({ filename, designId, type }) => {
       return 'Markdown Document';
     }
     if (filename.endsWith('_summary.json')) {
-      return 'Validation Summary (JSON)';
+      return 'Planning Summary (JSON)';
+    }
+    if (filename.endsWith('.svg')) {
+      return 'PCB Render (SVG)';
+    }
+    if (filename.endsWith('.png')) {
+      return 'PCB Render (PNG)';
     }
     return 'File';
   };
