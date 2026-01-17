@@ -2,11 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   UploadCloud,
-  ShieldCheck,
-  AlertTriangle,
   Cpu,
-  CircuitBoard,
-  FileCheck2,
+  FileText,
+  Image,
   Loader2,
   X,
 } from 'lucide-react';
@@ -30,54 +28,12 @@ const PcbValidator = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [showAllComponents, setShowAllComponents] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
-  const fileSummary = useMemo(() => {
-    if (!result?.summary) return null;
-    return result.summary.counts || {};
-  }, [result]);
-
-  const componentList = useMemo(() => {
-    const list = result?.components?.list || [];
-    if (showAllComponents) return list;
-    return list.slice(0, 18);
-  }, [result, showAllComponents]);
-
-  const drcCategories = useMemo(() => {
-    const categories = result?.validation?.drc?.data?.violation_categories || {};
-    return Object.entries(categories).slice(0, 6);
-  }, [result]);
-
-  const boundaryIssues = useMemo(() => {
-    const issues = result?.validation?.boundaries?.data?.issues || [];
-    return issues.slice(0, 6);
-  }, [result]);
-
-  const statusConfig = useMemo(() => {
-    const status = result?.summary?.status || 'review';
-    if (status === 'pass') {
-      return {
-        label: 'Pass',
-        icon: ShieldCheck,
-        tone: 'bg-purple-500/15 text-purple-100 border-purple-400/40',
-      };
-    }
-    if (status === 'issues') {
-      return {
-        label: 'Issues Found',
-        icon: AlertTriangle,
-        tone: 'bg-rose-500/20 text-rose-100 border-rose-400/50',
-      };
-    }
-    return {
-      label: 'Needs Review',
-      icon: FileCheck2,
-      tone: 'bg-rose-500/15 text-rose-100 border-rose-400/40',
-    };
-  }, [result]);
-
-  const StatusIcon = statusConfig.icon;
+  const firmwarePlan = useMemo(() => result?.firmwarePlan || {}, [result]);
+  const prdSummary = useMemo(() => result?.prd || {}, [result]);
+  const renderFilename = result?.render?.svg || result?.files?.render || null;
+  const renderUrl = renderFilename ? api.getFileDownloadUrl(renderFilename) : null;
 
   const pageVariants = {
     hidden: { opacity: 0 },
@@ -111,15 +67,6 @@ const PcbValidator = () => {
     },
   };
 
-  const statListVariants = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: shouldReduceMotion ? 0 : 0.02,
-      },
-    },
-  };
-
   const itemVariants = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 12 },
     show: {
@@ -129,19 +76,6 @@ const PcbValidator = () => {
         type: 'spring',
         stiffness: 160,
         damping: 20,
-      },
-    },
-  };
-
-  const statItemVariants = {
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 8 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 220,
-        damping: 18,
       },
     },
   };
@@ -183,11 +117,11 @@ const PcbValidator = () => {
     try {
       const response = await api.validatePcb(selectedFiles);
       if (!response.success) {
-        throw new Error(response.error || 'Validation failed');
+        throw new Error(response.error || 'Plan generation failed');
       }
       setResult(response);
     } catch (err) {
-      setError(err.message || 'Failed to validate design');
+      setError(err.message || 'Failed to generate plan');
     } finally {
       setIsSubmitting(false);
     }
@@ -208,11 +142,11 @@ const PcbValidator = () => {
               <span className="text-xs uppercase tracking-[0.3em]">Omni Board</span>
             </div>
             <h1 className="mt-4 text-4xl md:text-6xl font-semibold text-purple-50 leading-tight">
-              Omni Board validates KiCad designs with firmware-ready precision.
+              Omni Board turns KiCad files into firmware implementation plans.
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-purple-200">
-              Upload your KiCad project files and get a structured validation report, firmware
-              bring-up plan, and technical notes for every component.
+              Upload your KiCad project files and receive a firmware plan plus a PRD-ready summary
+              generated from the raw design data.
             </p>
           </div>
         </motion.header>
@@ -222,7 +156,7 @@ const PcbValidator = () => {
             <motion.section className="glass-card" variants={fadeUpVariants}>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-purple-100">Upload design files</h2>
+                  <h2 className="text-xl font-semibold text-purple-100">Upload KiCad files</h2>
                   <p className="text-sm text-purple-300 mt-1">
                     Recommended: .kicad_pro + .kicad_pcb + .kicad_sch
                   </p>
@@ -237,10 +171,10 @@ const PcbValidator = () => {
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Validating...
+                        Generating plan...
                       </span>
                     ) : (
-                      'Validate PCB'
+                      'Generate Firmware Plan'
                     )}
                   </button>
                 </div>
@@ -339,155 +273,72 @@ const PcbValidator = () => {
                   animate="show"
                   exit="hidden"
                 >
-                  <motion.section className="space-y-4" variants={fadeUpVariants}>
-                    <motion.div className="grid gap-4 md:grid-cols-4" layout variants={statListVariants}>
-                      <motion.div
-                        className={`stat-card ${statusConfig.tone}`}
-                        variants={statItemVariants}
-                        whileHover={{ y: -4 }}
-                      >
-                        <StatusIcon className="w-6 h-6" />
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em]">Status</p>
-                          <p className="text-lg font-semibold">{statusConfig.label}</p>
-                        </div>
-                      </motion.div>
-                      <motion.div
-                        className="stat-card text-rose-100 border-rose-400/40 bg-rose-500/10"
-                        variants={statItemVariants}
-                        whileHover={{ y: -4 }}
-                      >
-                        <CircuitBoard className="w-6 h-6 text-rose-200" />
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-rose-200">
-                            Components
-                          </p>
-                          <p className="text-lg font-semibold text-rose-100">
-                            {fileSummary?.components ?? '--'}
-                          </p>
-                        </div>
-                      </motion.div>
-                      <motion.div
-                        className="stat-card text-rose-100 border-rose-400/40 bg-rose-500/10"
-                        variants={statItemVariants}
-                        whileHover={{ y: -4 }}
-                      >
-                        <AlertTriangle className="w-6 h-6 text-rose-200" />
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-rose-200">DRC</p>
-                          <p className="text-lg font-semibold text-rose-100">
-                            {fileSummary?.drcViolations ?? '--'}
-                          </p>
-                        </div>
-                      </motion.div>
-                      <motion.div
-                        className="stat-card text-rose-100 border-rose-400/40 bg-rose-500/10"
-                        variants={statItemVariants}
-                        whileHover={{ y: -4 }}
-                      >
-                        <Cpu className="w-6 h-6 text-rose-200" />
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-rose-200">
-                            Patterns
-                          </p>
-                          <p className="text-lg font-semibold text-rose-100">
-                            {fileSummary?.patterns ?? '--'}
-                          </p>
-                        </div>
-                      </motion.div>
-                    </motion.div>
-
-                    {result.summary?.notes?.length > 0 && (
-                      <motion.div
-                        className="text-sm text-rose-200"
-                        variants={itemVariants}
-                        initial="hidden"
-                        animate="show"
-                      >
+                  {result.summary?.notes?.length > 0 && (
+                    <motion.section className="glass-card" variants={fadeUpVariants}>
+                      <h2 className="text-xl font-semibold text-purple-100">Plan notes</h2>
+                      <motion.div className="mt-3 space-y-2 text-sm text-purple-300" variants={listVariants}>
                         {result.summary.notes.map((note) => (
-                          <p key={note}>- {note}</p>
+                          <motion.p key={note} variants={itemVariants}>
+                            - {note}
+                          </motion.p>
                         ))}
                       </motion.div>
-                    )}
+                    </motion.section>
+                  )}
 
-                    {result.mcp?.available === false && (
-                      <motion.div
-                        className="border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
-                        variants={itemVariants}
-                      >
-                        MCP server could not be reached. Validation ran with limited data.
-                      </motion.div>
-                    )}
+                  <motion.section className="glass-card" variants={fadeUpVariants}>
+                    <h2 className="text-xl font-semibold text-purple-100">Generated outputs</h2>
+                    <p className="mt-1 text-sm text-purple-300">
+                      Download the firmware plan, PRD summary, and render artifacts.
+                    </p>
+                    <motion.div className="mt-5 grid gap-4 md:grid-cols-3" variants={listVariants}>
+                      {Object.entries(result.files || {})
+                        .filter(([, filename]) => Boolean(filename))
+                        .map(([key, filename]) => (
+                          <motion.div key={key} variants={itemVariants} whileHover={{ y: -4 }}>
+                            <FileCard filename={filename} />
+                          </motion.div>
+                        ))}
+                    </motion.div>
                   </motion.section>
 
                   <motion.section className="glass-card" variants={fadeUpVariants}>
-                    <h2 className="text-xl font-semibold text-purple-100">Validation outputs</h2>
-                    <p className="mt-1 text-sm text-purple-300">
-                      Download the generated report, firmware plan, and component notes.
-                    </p>
-                    <motion.div className="mt-5 grid gap-4 md:grid-cols-3" variants={listVariants}>
-                      {Object.entries(result.files || {}).map(([key, filename]) => (
-                        <motion.div key={key} variants={itemVariants} whileHover={{ y: -4 }}>
-                          <FileCard filename={filename} />
-                        </motion.div>
-                      ))}
-                    </motion.div>
+                    <div className="flex items-center gap-2 text-purple-100">
+                      <Image className="w-5 h-5" />
+                      <h2 className="text-xl font-semibold">KiCad render</h2>
+                    </div>
+                    {renderUrl ? (
+                      <a href={renderUrl} target="_blank" rel="noreferrer">
+                        <div className="mt-4 border border-purple-500/30 bg-[#160b2a] p-4">
+                          <img
+                            src={renderUrl}
+                            alt="KiCad PCB render"
+                            className="w-full h-auto"
+                          />
+                        </div>
+                      </a>
+                    ) : (
+                      <p className="mt-4 text-sm text-purple-300">
+                        Render not available yet. Upload a .kicad_pcb file to generate a board view.
+                      </p>
+                    )}
                   </motion.section>
 
                   <motion.section className="grid gap-6 md:grid-cols-2" variants={fadeUpVariants}>
                     <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-purple-100">DRC overview</h3>
-                      {drcCategories.length === 0 ? (
-                        <p className="mt-3 text-sm text-purple-300">
-                          No DRC categories available yet. Upload a full project to run DRC checks.
-                        </p>
-                      ) : (
-                        <motion.ul className="mt-4 space-y-2 text-sm text-purple-200" variants={listVariants}>
-                          {drcCategories.map(([name, count]) => (
-                            <motion.li
-                              key={name}
-                              variants={itemVariants}
-                              className="flex items-center justify-between gap-4"
-                            >
-                              <span className="truncate">{name}</span>
-                              <span className="font-semibold text-purple-100">{count}</span>
-                            </motion.li>
-                          ))}
-                        </motion.ul>
-                      )}
-                    </motion.div>
-
-                    <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-purple-100">Boundary issues</h3>
-                      {boundaryIssues.length === 0 ? (
-                        <p className="mt-3 text-sm text-purple-300">No boundary issues reported.</p>
-                      ) : (
-                        <motion.ul className="mt-4 space-y-2 text-sm text-purple-200" variants={listVariants}>
-                          {boundaryIssues.map((issue, index) => (
-                            <motion.li key={`${issue.component_ref}-${index}`} variants={itemVariants}>
-                              <span className="font-semibold text-purple-100">
-                                {issue.component_ref}
-                              </span>
-                              {`: ${issue.message}`}
-                            </motion.li>
-                          ))}
-                        </motion.ul>
-                      )}
-                    </motion.div>
-                  </motion.section>
-
-                  <motion.section className="grid gap-6 md:grid-cols-2" variants={fadeUpVariants}>
-                    <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-purple-100">Firmware plan</h3>
-                      <p className="mt-2 text-sm text-purple-300">{result.firmwarePlan?.overview}</p>
+                      <div className="flex items-center gap-2 text-purple-100">
+                        <Cpu className="w-5 h-5" />
+                        <h3 className="text-lg font-semibold">Firmware implementation plan</h3>
+                      </div>
+                      <p className="mt-2 text-sm text-purple-300">{firmwarePlan?.overview}</p>
                       <motion.div className="mt-4 space-y-4" variants={listVariants}>
-                        {(result.firmwarePlan?.phases || []).map((phase) => (
+                        {(firmwarePlan?.phases || []).map((phase) => (
                           <motion.div key={phase.phase} className="phase-card" variants={itemVariants}>
                             <h4 className="text-sm font-semibold text-purple-200 uppercase tracking-[0.2em]">
                               {phase.phase}
                             </h4>
                             <ul className="mt-2 text-sm text-purple-200 list-disc list-inside space-y-1">
-                              {phase.tasks.map((task) => (
+                              {(phase.tasks || []).map((task) => (
                                 <li key={task}>{task}</li>
                               ))}
                             </ul>
@@ -497,43 +348,64 @@ const PcbValidator = () => {
                     </motion.div>
 
                     <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-purple-100">
-                        Component technical notes
-                      </h3>
+                      <div className="flex items-center gap-2 text-purple-100">
+                        <FileText className="w-5 h-5" />
+                        <h3 className="text-lg font-semibold">PRD summary</h3>
+                      </div>
                       <p className="mt-2 text-sm text-purple-300">
-                        Key components and their firmware-facing roles.
+                        {prdSummary?.productBrief}
                       </p>
-                      <motion.div className="mt-4 space-y-3" variants={listVariants}>
-                        {componentList.map((component) => (
-                          <motion.div
-                            key={component.reference}
-                            className="component-row"
-                            variants={itemVariants}
-                            layout
-                          >
-                            <div>
-                              <p className="text-sm font-semibold text-purple-100">
-                                {component.reference} · {component.category}
-                              </p>
-                              <p className="text-xs text-purple-300">
-                                {component.value || 'No value'}
-                              </p>
-                            </div>
-                            <p className="text-xs text-purple-300 max-w-xs">
-                              {component.description}
-                            </p>
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                      {result.components?.list?.length > 18 && (
-                        <button
-                          type="button"
-                          className="mt-4 text-sm font-semibold text-purple-200 hover:text-purple-50"
-                          onClick={() => setShowAllComponents((prev) => !prev)}
-                        >
-                          {showAllComponents ? 'Show fewer components' : 'Show all components'}
-                        </button>
-                      )}
+                      <div className="mt-4 space-y-4 text-sm text-purple-200">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">
+                            Functional requirements
+                          </p>
+                          <ul className="mt-2 list-disc list-inside space-y-1">
+                            {(prdSummary?.functionalRequirements?.length
+                              ? prdSummary.functionalRequirements
+                              : ['(none provided)']
+                            ).map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">
+                            Non-functional requirements
+                          </p>
+                          <ul className="mt-2 list-disc list-inside space-y-1">
+                            {(prdSummary?.nonfunctionalRequirements?.length
+                              ? prdSummary.nonfunctionalRequirements
+                              : ['(none provided)']
+                            ).map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">Risks</p>
+                          <ul className="mt-2 list-disc list-inside space-y-1">
+                            {(prdSummary?.risks?.length ? prdSummary.risks : ['(none provided)']).map(
+                              (item) => (
+                              <li key={item}>{item}</li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">
+                            Milestones
+                          </p>
+                          <ul className="mt-2 list-disc list-inside space-y-1">
+                            {(prdSummary?.milestones?.length
+                              ? prdSummary.milestones
+                              : ['(none provided)']
+                            ).map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
                     </motion.div>
                   </motion.section>
                 </motion.div>
