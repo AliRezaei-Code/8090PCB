@@ -1,348 +1,247 @@
 # 8090PCB Validation Interface
 
-A modern web-based validation UI that integrates with KiCad MCP (Model Context Protocol) to analyze uploaded KiCad designs, generate a validation report, and produce a firmware bring-up plan with per-component technical notes.
+A web-based validation UI that integrates with the KiCad MCP server to analyze uploaded KiCad designs, generate a validation report, and produce a firmware bring-up plan with per-component technical notes.
 
-## Features
+## Table of contents
 
-- **Validation Workflow** - Upload .kicad_pro/.kicad_pcb/.kicad_sch and receive a structured report
-- **MCP Integration** - Uses KiCad MCP tools for DRC, boundary checks, netlist extraction, and pattern analysis
-- **Firmware Plan** - Generates a bring-up plan and per-component firmware tasks
-- **Component Notes** - Technical descriptions for each component in the design
-- **Fast UI** - React + Vite + Tailwind for responsive UX
+- Quick start
+- Prerequisites
+- MCP server setup
+- Running the app
+- Validation workflow
+- Upload requirements and limits
+- Outputs
+- API
+- Configuration
+- Deployment
+- Troubleshooting
+- Legacy chat interface
+- Docs
 
-## Project Structure
+## Quick start
 
-```
-web-app/
-├── frontend/              # React + Vite frontend application
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── PcbValidator.jsx     # Main validation workflow UI
-│   │   │   ├── FileCard.jsx         # File download card component
-│   │   │   ├── ChatInterface.jsx    # Legacy chat component (optional)
-│   │   │   └── ChatMessage.jsx      # Legacy chat message component
-│   │   ├── services/
-│   │   │   └── api.js               # API client service
-│   │   ├── App.jsx                  # Root component
-│   │   ├── index.css                # Global styles + Tailwind
-│   │   └── main.jsx                 # React entry point
-│   ├── index.html                   # HTML template
-│   ├── vite.config.js               # Vite configuration
-│   ├── tailwind.config.js           # Tailwind CSS configuration
-│   ├── postcss.config.js            # PostCSS configuration
-│   └── package.json                 # Frontend dependencies
-│
-└── backend/               # Node.js + Express backend server
-    ├── routes/
-    │   ├── pcb.js                   # PCB validation upload endpoint
-    │   ├── chat.js                  # Legacy chat endpoints
-    │   └── files.js                 # File download endpoints
-    ├── services/
-    │   ├── mcpBridge.js             # MCP stdio client bridge
-    │   ├── pcbValidator.js          # Validation pipeline
-    │   └── mcpClient.js             # Legacy chat MCP client
-    ├── generated/                   # Generated PCB files
-    ├── uploads/                     # Uploaded file storage
-    ├── server.js                    # Express server setup
-    ├── .env.example                 # Environment variables template
-    ├── package.json                 # Backend dependencies
-    └── .gitignore                   # Git ignore rules
+```bash
+cd web-app
+bash setup.sh
+npm run dev
 ```
 
-## Setup & Installation
+Open `http://localhost:3000`.
 
-### Prerequisites
+## Prerequisites
 
-- **Node.js** 16+ and npm
-- **Python** 3.8+ (for running the KiCad MCP server)
-- **KiCad** installed on your system (for actual PCB design operations)
+- Node.js 16+ and npm
+- Python 3.8+ (for the KiCad MCP server)
+- KiCad 9+ (for kicad-cli used by DRC)
 
-### Backend Setup
+## MCP server setup
 
-1. Navigate to the backend directory:
+The backend spawns the MCP server as a Python process per validation request. Make sure the MCP server dependencies are installed.
+
+From the repo root:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+If you prefer uv:
+
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -e .
+```
+
+If KiCad is installed, ensure `kicad-cli` is in your PATH or available at the default KiCad install location so DRC can run.
+
+## Running the app
+
+Terminal 1 (backend):
+
 ```bash
 cd web-app/backend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file from the template:
-```bash
 cp .env.example .env
+npm install
+npm run dev
 ```
 
-4. Update `.env` with your configuration:
+Terminal 2 (frontend):
+
+```bash
+cd web-app/frontend
+npm install
+npm run dev
+```
+
+## Validation workflow
+
+High-level flow:
+
+```
+Upload KiCad files
+   -> /api/pcb/validate
+   -> MCP tools (DRC, boundaries, netlist, patterns, BOM)
+   -> Report + firmware plan + component notes
+   -> Download artifacts
+```
+
+The backend uses MCP tools when available and degrades gracefully if some inputs or tools are missing.
+
+## Upload requirements and limits
+
+Recommended upload set:
+
+- `.kicad_pro` (project file)
+- `.kicad_sch` (schematic)
+- `.kicad_pcb` (PCB layout)
+
+Other accepted files:
+
+- `.kicad_prl`, `.kicad_sym`, `.kicad_mod`, `.csv` (BOM)
+
+Limits:
+
+- Max 20 files per request
+- Max 50MB per file
+
+Behavior notes:
+
+- If `.kicad_pro` is present, DRC and boundary checks run.
+- If only `.kicad_sch` is present, netlist and pattern analysis still run.
+- If only `.kicad_pcb` is present, output will be limited to a summary with minimal component data.
+
+## Outputs
+
+Generated files are stored in `web-app/backend/generated`:
+
+- `validation_<id>_report.md`: consolidated validation report
+- `validation_<id>_firmware_plan.md`: firmware bring-up plan
+- `validation_<id>_components.md`: per-component technical notes
+- `validation_<id>_summary.json`: machine-readable summary
+
+Uploads are stored in `web-app/backend/uploads/<validationId>`.
+
+Status levels:
+
+- `pass`: DRC and boundary checks show no issues
+- `review`: incomplete data or checks not run
+- `issues`: DRC or boundary issues detected
+
+## API
+
+### POST /api/pcb/validate
+
+- Content type: `multipart/form-data`
+- Field name: `files` (multiple)
+
+Example:
+
+```bash
+curl -X POST http://localhost:3001/api/pcb/validate \
+  -F "files=@/path/to/design.kicad_pro" \
+  -F "files=@/path/to/design.kicad_sch" \
+  -F "files=@/path/to/design.kicad_pcb"
+```
+
+Example response (summary):
+
+```json
+{
+  "success": true,
+  "validationId": "validation_123456",
+  "summary": {
+    "status": "issues",
+    "counts": {
+      "components": 42,
+      "drcViolations": 3
+    }
+  },
+  "files": {
+    "report": "validation_123456_report.md",
+    "firmwarePlan": "validation_123456_firmware_plan.md",
+    "components": "validation_123456_components.md",
+    "summary": "validation_123456_summary.json"
+  }
+}
+```
+
+### GET /api/files/:filename
+
+Download a generated file.
+
+### GET /api/files/preview/:filename
+
+Preview a generated text file.
+
+### GET /api/files
+
+List generated files.
+
+Legacy chat endpoints still exist under `/api/chat` but are not used by the validator UI.
+
+## Configuration
+
+Backend environment variables (`web-app/backend/.env`):
+
 ```env
 PORT=3001
 KICAD_MCP_SERVER_PATH=../../main.py
-# Optional: specify Python executable for the MCP server
 KICAD_MCP_PYTHON=/path/to/python
 NODE_ENV=development
 ```
 
-5. Start the backend server:
-```bash
-npm start
-# or for development with auto-reload
-npm run dev
-```
+Frontend environment variables:
 
-The backend will be available at `http://localhost:3001`
+- `VITE_API_URL` (default: `http://localhost:3001/api`)
 
-### Frontend Setup
+## Deployment
 
-1. In a new terminal, navigate to the frontend directory:
-```bash
-cd web-app/frontend
-```
+1. Build the frontend:
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-The frontend will be available at `http://localhost:3000`
-
-## Running the Application
-
-### Development Mode
-
-Terminal 1 - Backend:
-```bash
-cd web-app/backend
-npm run dev
-```
-
-Terminal 2 - Frontend:
-```bash
-cd web-app/frontend
-npm run dev
-```
-
-Open your browser to `http://localhost:3000`
-
-### Production Build
-
-Backend (no build needed):
-```bash
-cd web-app/backend
-npm start
-```
-
-Frontend build:
 ```bash
 cd web-app/frontend
 npm run build
+```
+
+2. Serve the frontend (example):
+
+```bash
+cd web-app/frontend
 npm run preview
 ```
 
-## API Endpoints
+3. Run the backend:
 
-### PCB Validation API
-
-**POST /api/pcb/validate**
-- Upload KiCad files and return validation output.
-- Content type: `multipart/form-data`
-- Field name: `files` (multiple)
-- Recommended files: `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`
-- Response (summary):
-  ```json
-  {
-    "success": true,
-    "validationId": "validation_123456",
-    "summary": {
-      "status": "issues",
-      "counts": {
-        "components": 42,
-        "drcViolations": 3
-      }
-    },
-    "files": {
-      "report": "validation_123456_report.md",
-      "firmwarePlan": "validation_123456_firmware_plan.md",
-      "components": "validation_123456_components.md"
-    }
-  }
-  ```
-
-### File API
-
-**GET /api/files/:filename**
-- Download a generated file
-
-**GET /api/files/preview/:filename**
-- Preview file content (for text files)
-- Response:
-  ```json
-  {
-    "filename": "design_123.md",
-    "content": "...",
-    "size": 1024
-  }
-  ```
-
-**GET /api/files**
-- List all generated files
-- Response: Array of file metadata
-
-## Usage
-
-1. **Open the Validation UI**
-   - Navigate to http://localhost:3000
-
-2. **Upload KiCad Files**
-   - Drag and drop `.kicad_pro`, `.kicad_pcb`, and `.kicad_sch`
-   - The project file enables DRC, boundary checks, and full netlist extraction
-
-3. **Run Validation**
-   - Click "Validate PCB"
-   - The backend runs MCP tools and generates reports
-
-4. **Download Outputs**
-   - **Validation Report** (.md)
-   - **Firmware Plan** (.md)
-   - **Component Notes** (.md)
-   - **Summary JSON** (.json)
-
-## Generated Files
-
-### Validation Report (.md)
-- DRC summary, boundary checks, and circuit pattern overview
-- Includes key issues and remediation notes
-
-### Firmware Plan (.md)
-- Phased bring-up plan with MCU and interface tasks
-- Per-component firmware action list
-
-### Component Notes (.md)
-- Technical description per component
-- Firmware-facing considerations
-
-### Summary JSON (.json)
-- Machine-readable version of validation outputs
-
-## Environment Variables
-
-```env
-# Server port
-PORT=3001
-
-# Path to KiCad MCP server (relative to backend directory)
-KICAD_MCP_SERVER_PATH=../../main.py
-
-# Optional: Python executable for the MCP server
-KICAD_MCP_PYTHON=/path/to/python
-
-# Environment mode
-NODE_ENV=development
+```bash
+cd web-app/backend
+npm start
 ```
+
+You can also serve the frontend build from a static host and point it at the backend using `VITE_API_URL`.
 
 ## Troubleshooting
 
-### Backend Connection Issues
+- `ECONNREFUSED` on port 3001: backend not running or wrong PORT.
+- `MCP server not found`: verify `KICAD_MCP_SERVER_PATH` and Python dependencies.
+- `kicad-cli not found`: install KiCad 9+ or add `kicad-cli` to PATH.
+- Empty output: check that `.kicad_pro` or `.kicad_sch` was uploaded.
 
-**Error: "ECONNREFUSED on port 3001"**
-- Ensure backend is running: `npm start` in `/web-app/backend`
-- Check PORT in `.env` matches the server configuration
+## Legacy chat interface
 
-### MCP Server Not Found
+The previous chat-based UI and endpoints are still in the repo:
 
-**Error: "KICAD_MCP_SERVER_PATH not found"**
-- Verify the path to `main.py` is correct
-- Update `KICAD_MCP_SERVER_PATH` in `.env`
-- Ensure Python 3.8+ is installed
+- Frontend: `web-app/frontend/src/components/ChatInterface.jsx`
+- Backend: `web-app/backend/routes/chat.js`
 
-### Validation Output Issues
+They are not wired into the current `App.jsx` but can be restored if needed.
 
-**Error: "Failed to validate design"**
-- Ensure KiCad MCP server can launch from `KICAD_MCP_SERVER_PATH`
-- Verify Python dependencies for the MCP server are installed
-- Ensure write permissions in `web-app/backend/generated/`
-- Review browser console and server logs for details
+## Docs
 
-### Port Already in Use
+Additional documentation:
 
-**Error: "Port 3000/3001 already in use"**
-```bash
-# Kill process on specific port (macOS/Linux)
-lsof -ti:3000 | xargs kill -9
-lsof -ti:3001 | xargs kill -9
-```
-
-## Development
-
-### Adding New Components
-
-1. Create component in `frontend/src/components/`
-2. Use Tailwind CSS classes for styling
-3. Import and use in parent components
-
-### Extending API Endpoints
-
-1. Add new route file in `backend/routes/`
-2. Create corresponding service in `backend/services/`
-3. Import route in `server.js`
-
-### Modifying MCP Integration
-
-Edit `backend/services/mcpBridge.js` and `backend/services/pcbValidator.js` to:
-- Change how requests are sent to the MCP server
-- Add new MCP tool support
-- Customize validation logic and report generation
-
-## Performance Optimization
-
-- **Frontend**: Vite hot module replacement for fast development
-- **Backend**: Connection pooling for MCP server
-- **Files**: Automatic cleanup of old generated files (future)
-
-## Security Considerations
-
-- Input validation on all API endpoints
-- File path traversal prevention
-- CORS configuration for production
-- Environment variables for sensitive data
-- No sensitive data in version control
-
-## Future Enhancements
-
-- [ ] Real MCP server integration (currently mocked)
-- [ ] File versioning and history
-- [ ] Collaborative design editing
-- [ ] Design templates and presets
-- [ ] Advanced routing and placement
-- [ ] 3D PCB preview
-- [ ] Bill of Materials (BOM) generation
-- [ ] Cost estimation
-- [ ] Design rule checking (DRC)
-
-## License
-
-This project is part of 8090PCB and follows the same license terms.
-
-## Support
-
-For issues or questions:
-1. Check the troubleshooting section
-2. Review server logs in both terminals
-3. Check browser console for client-side errors
-4. Open an issue in the repository
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
-
----
-
-Built with ❤️ for PCB designers everywhere.
+- `web-app/docs/ARCHITECTURE.md`
+- `web-app/docs/API.md`
+- `web-app/docs/VALIDATION_PIPELINE.md`
+- `web-app/docs/TROUBLESHOOTING.md`
