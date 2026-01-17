@@ -2,7 +2,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     from llama_index.core import StorageContext, VectorStoreIndex, load_index_from_storage
