@@ -265,7 +265,7 @@ You can also serve the frontend build from a static host and point it at the bac
 ## Troubleshooting
 
 - `ECONNREFUSED` on port 3001: backend not running or wrong PORT.
-- `LlamaIndex agent failed`: verify `CEREBRAS_API_KEY` and install `web-app/backend/agent/requirements.txt`.
+- `LlamaIndex agent failed`: verify Ollama is running and install `web-app/backend/agent/requirements.txt`.
 - `kicad-cli not found`: install KiCad 9+ or set `KICAD_CLI_PATH`.
 - Empty output: check that `.kicad_pro`, `.kicad_sch`, or `.kicad_pcb` was uploaded.
 
