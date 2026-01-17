@@ -4,7 +4,7 @@ Base URL (dev): `http://localhost:3001/api`
 
 ## POST /pcb/validate
 
-Upload KiCad files and generate validation output.
+Upload KiCad files and generate firmware planning output.
 
 ### Request
 
@@ -29,20 +29,22 @@ curl -X POST http://localhost:3001/api/pcb/validate \
   "validationId": "validation_1700000000000",
   "summary": {
     "validationId": "validation_1700000000000",
-    "status": "issues",
-    "notes": ["DRC: ..."],
+    "notes": ["Render failed: ..."],
     "counts": {
-      "components": 42,
-      "nets": 18,
-      "drcViolations": 3,
-      "boundaryIssues": 1,
-      "patterns": 4
+      "files": 3,
+      "bytes": 104857
     }
   },
+  "firmwarePlan": {
+    "overview": "..."
+  },
+  "prd": {
+    "productBrief": "..."
+  },
   "files": {
-    "report": "validation_1700000000000_report.md",
     "firmwarePlan": "validation_1700000000000_firmware_plan.md",
-    "components": "validation_1700000000000_components.md",
+    "prd": "validation_1700000000000_prd.md",
+    "render": "validation_1700000000000_render.svg",
     "summary": "validation_1700000000000_summary.json"
   }
 }
@@ -67,7 +69,7 @@ Preview a generated text file (markdown or json). Returns:
 
 ```json
 {
-  "filename": "validation_..._report.md",
+  "filename": "validation_..._firmware_plan.md",
   "content": "...",
   "size": 1024
 }
@@ -81,7 +83,7 @@ List all generated files:
 {
   "files": [
     {
-      "filename": "validation_..._report.md",
+      "filename": "validation_..._firmware_plan.md",
       "size": 1234,
       "created": "...",
       "modified": "..."
