@@ -117,6 +117,7 @@ GET http://localhost:3001/api/files/{filename}
 ## 📚 More Info
 
 See [README.md](./README.md) for comprehensive documentation.
+Additional docs are in `web-app/docs/`.
 
 ---
 
