@@ -23,7 +23,8 @@ Fix:
   source .agent-venv/bin/activate
   pip install -r web-app/backend/agent/requirements.txt
   ```
-- Set `CEREBRAS_API_KEY` and `CEREBRAS_MODEL` in `web-app/backend/.env`
+- Ensure Ollama is running and the models are pulled
+- Verify `OLLAMA_BASE_URL`, `OLLAMA_LLM_MODEL`, `OLLAMA_EMBED_MODEL`, and `OLLAMA_RERANK_MODEL`
 - If needed, set `LLAMA_AGENT_PYTHON` to the agent venv python path
 
 ## Render fails
