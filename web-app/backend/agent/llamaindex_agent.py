@@ -1,11 +1,19 @@
 import json
 import os
 import sys
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional
 
 try:
+    from llama_index.core import StorageContext, VectorStoreIndex, load_index_from_storage
     from llama_index.core.llms import ChatMessage
-    from llama_index.llms.openai import OpenAI
+    from llama_index.core.postprocessor import LLMRerank
+    from llama_index.core.query_engine import RetrieverQueryEngine
+    from llama_index.core.schema import Document
+    from llama_index.core import SimpleDirectoryReader
+    from llama_index.readers.file import PDFReader
+    from llama_index.llms.ollama import Ollama
+    from llama_index.embeddings.ollama import OllamaEmbedding
 except ImportError as exc:
     sys.stderr.write(
         "Missing LlamaIndex dependencies. Install with: "
@@ -66,13 +74,15 @@ def get_env(name: str, default: Optional[str] = None) -> Optional[str]:
     return value
 
 
-def build_llm() -> OpenAI:
-    api_key = get_env("CEREBRAS_API_KEY")
-    if not api_key:
-        raise RuntimeError("CEREBRAS_API_KEY is not set")
-    model = get_env("CEREBRAS_MODEL", "gpt-oss-120b")
-    api_base = get_env("CEREBRAS_API_BASE", "https://api.cerebras.ai/v1")
-    return OpenAI(model=model, api_key=api_key, api_base=api_base, temperature=0.2)
+def build_ollama_llm(model: str) -> Ollama:
+    base_url = get_env("OLLAMA_BASE_URL", "http://localhost:11434")
+    return Ollama(model=model, base_url=base_url, temperature=0.2)
+
+
+def build_embed_model() -> OllamaEmbedding:
+    base_url = get_env("OLLAMA_BASE_URL", "http://localhost:11434")
+    embed_model = get_env("OLLAMA_EMBED_MODEL", "qwen3-embedding:0.6b")
+    return OllamaEmbedding(model_name=embed_model, base_url=base_url)
 
 
 def limit_history(history: List[Dict[str, Any]], max_items: int = 8) -> List[Dict[str, Any]]:
@@ -81,7 +91,7 @@ def limit_history(history: List[Dict[str, Any]], max_items: int = 8) -> List[Dic
     return history[-max_items:]
 
 
-def run_chat(llm: OpenAI, payload: Dict[str, Any]) -> Dict[str, Any]:
+def run_chat(llm: Ollama, payload: Dict[str, Any]) -> Dict[str, Any]:
     messages: List[ChatMessage] = [ChatMessage(role="system", content=SYSTEM_CHAT_PROMPT)]
     history = limit_history(payload.get("history", []))
     for item in history:
@@ -118,14 +128,130 @@ def extract_json(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def run_firmware(llm: OpenAI, payload: Dict[str, Any]) -> Dict[str, Any]:
+def resolve_docs_dir() -> Path:
+    from_env = get_env("FIRMWARE_DOCS_DIR")
+    if from_env:
+        return Path(from_env).expanduser().resolve()
+    return Path(__file__).resolve().parent.parent / "stm32"
+
+
+def resolve_index_dir() -> Path:
+    from_env = get_env("FIRMWARE_INDEX_DIR")
+    if from_env:
+        return Path(from_env).expanduser().resolve()
+    return Path(__file__).resolve().parent / "index_stm32"
+
+
+def recursive_chunk(text: str, max_chars: int, overlap: int) -> List[str]:
+    if len(text) <= max_chars:
+        return [text]
+
+    separators = ["\n\n", "\n", ". ", " "]
+    chunks: List[str] = []
+    buffer = text
+
+    for sep in separators:
+        if len(buffer) <= max_chars:
+            break
+        parts = buffer.split(sep)
+        if len(parts) == 1:
+            continue
+
+        current = ""
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            candidate = f"{current}{sep if current else ''}{part}"
+            if len(candidate) > max_chars:
+                if current:
+                    chunks.append(current)
+                current = part
+            else:
+                current = candidate
+        if current:
+            chunks.append(current)
+        buffer = "\n".join(chunks)
+
+    if len(buffer) > max_chars and not chunks:
+        for i in range(0, len(buffer), max_chars):
+            chunks.append(buffer[i : i + max_chars])
+
+    with_overlap: List[str] = []
+    for chunk in chunks:
+        if not with_overlap:
+            with_overlap.append(chunk)
+            continue
+        tail = with_overlap[-1]
+        overlap_text = tail[-overlap:] if overlap > 0 else ""
+        with_overlap.append(f"{overlap_text}{chunk}")
+    return with_overlap
+
+
+def build_stm32_index(embed_model: OllamaEmbedding) -> VectorStoreIndex:
+    docs_dir = resolve_docs_dir()
+    index_dir = resolve_index_dir()
+    index_dir.mkdir(parents=True, exist_ok=True)
+
+    if (index_dir / "docstore.json").exists():
+        storage = StorageContext.from_defaults(persist_dir=str(index_dir))
+        return load_index_from_storage(storage)
+
+    reader = SimpleDirectoryReader(
+        input_dir=str(docs_dir),
+        recursive=True,
+        file_extractor={".pdf": PDFReader()},
+    )
+    docs = reader.load_data()
+
+    chunk_size = int(get_env("RAG_CHUNK_SIZE", "1400"))
+    overlap = int(get_env("RAG_CHUNK_OVERLAP", "180"))
+
+    chunked_docs: List[Document] = []
+    for doc in docs:
+        text = doc.text or ""
+        for chunk in recursive_chunk(text, chunk_size, overlap):
+            chunked_docs.append(
+                Document(text=chunk, metadata=doc.metadata or {})
+            )
+
+    index = VectorStoreIndex.from_documents(chunked_docs, embed_model=embed_model)
+    index.storage_context.persist(persist_dir=str(index_dir))
+    return index
+
+
+def build_rag_context(embed_model: OllamaEmbedding, rerank_llm: Ollama, query: str) -> str:
+    index = build_stm32_index(embed_model)
+    retriever = index.as_retriever(similarity_top_k=8)
+    reranker = LLMRerank(top_n=4, llm=rerank_llm)
+    engine = RetrieverQueryEngine(
+        retriever=retriever,
+        node_postprocessors=[reranker],
+        response_mode="compact",
+    )
+    response = engine.query(query)
+    return str(response)
+
+
+def run_firmware(llm: Ollama, payload: Dict[str, Any]) -> Dict[str, Any]:
     context = payload.get("context", {})
     compact = json.dumps(context, ensure_ascii=True)
+    embed_model = build_embed_model()
+    rerank_model = get_env("OLLAMA_RERANK_MODEL", "sam860/qwen3-reranker:0.6b-F16")
+    rerank_llm = build_ollama_llm(rerank_model)
+
+    rag_query = (
+        "STM32 firmware bring-up checklist covering clocks, power rails, boot pins, "
+        "debug interfaces, peripheral initialization, and safety checks."
+    )
+    rag_context = build_rag_context(embed_model, rerank_llm, rag_query)
     messages = [
         ChatMessage(role="system", content=SYSTEM_FIRMWARE_PROMPT),
         ChatMessage(
             role="user",
             content=(
+                "STM32 reference context:\n"
+                f"{rag_context}\n\n"
                 "Context JSON (truncated):\n"
                 f"{compact}\n\n"
                 "Return JSON only."
@@ -143,7 +269,8 @@ def run_firmware(llm: OpenAI, payload: Dict[str, Any]) -> Dict[str, Any]:
 def main() -> None:
     payload = load_input()
     mode = str(payload.get("mode", "chat")).lower()
-    llm = build_llm()
+    llm_model = get_env("OLLAMA_LLM_MODEL", "gpt-oss:20b")
+    llm = build_ollama_llm(llm_model)
 
     if mode == "firmware":
         result = run_firmware(llm, payload)
