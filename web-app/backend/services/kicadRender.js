@@ -18,6 +18,9 @@ function resolveKicadCli() {
 
 export async function renderPcbSvg({ pcbPath, outputDir, baseName }) {
   if (!pcbPath) return null;
+  if (!fs.existsSync(pcbPath)) {
+    throw new Error(`PCB file not found: ${pcbPath}`);
+  }
 
   const kicadCli = resolveKicadCli();
   const outputName = `${baseName}_render.svg`;
