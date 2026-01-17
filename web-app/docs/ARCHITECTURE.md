@@ -7,6 +7,7 @@ This document explains how the validation UI is wired and how data moves through
 - Frontend (React + Vite): upload UI, status dashboard, and download links.
 - Backend (Express): file upload handling, MCP tool orchestration, report generation.
 - MCP server (Python): KiCad-aware tools for DRC, netlist, boundary checks, and pattern analysis.
+- LlamaIndex agent (Python, optional): Cerebras-backed summaries for chat and validation.
 
 ## Data flow
 
@@ -17,6 +18,8 @@ Browser
         -> backend/services/pcbValidator.js
            -> backend/services/mcpBridge.js (stdio client)
            -> MCP tools (Python)
+           -> backend/services/llmAgent.js (optional)
+           -> backend/agent/llamaindex_agent.py
            -> generate markdown + JSON files
      <- response with summary + filenames
   -> GET /api/files/:filename
@@ -32,12 +35,17 @@ Browser
 - `web-app/backend/services/pcbValidator.js`
   - Orchestrates MCP tool calls
   - Builds component summaries
+  - Optionally enriches summaries using the LlamaIndex agent
   - Generates report, firmware plan, and component notes
 
 - `web-app/backend/services/mcpBridge.js`
   - Spawns the MCP server with stdio transport
   - Supports `KICAD_MCP_PYTHON` and `KICAD_MCP_SERVER_PATH`
   - Closes the client after each call
+
+- `web-app/backend/services/llmAgent.js`
+  - Spawns the LlamaIndex agent for chat/summary generation
+  - Uses `CEREBRAS_API_KEY` and `CEREBRAS_MODEL`
 
 ## Frontend modules
 

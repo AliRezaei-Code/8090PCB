@@ -7,12 +7,13 @@ This document explains how the backend turns uploaded KiCad files into validatio
 1. Upload files via `POST /api/pcb/validate`.
 2. Backend stores uploads under `backend/uploads/<validationId>`.
 3. Backend calls MCP tools (if available).
-4. Backend builds:
+4. Backend optionally calls the LlamaIndex agent (Cerebras) to refine summary notes and firmware overview.
+5. Backend builds:
    - Validation report (markdown)
    - Firmware bring-up plan (markdown)
    - Component technical notes (markdown)
    - Summary JSON
-5. Files are written to `backend/generated/` and returned to the UI.
+6. Files are written to `backend/generated/` and returned to the UI.
 
 ## Tool calls
 

@@ -33,6 +33,7 @@ Open `http://localhost:3000`.
 
 - Node.js 16+ and npm
 - Python 3.8+ (for the KiCad MCP server)
+- Python 3.10+ (for the LlamaIndex agent, if enabled)
 - KiCad 9+ (for kicad-cli used by DRC)
 
 ## MCP server setup
@@ -66,6 +67,14 @@ cd web-app/backend
 cp .env.example .env
 npm install
 npm run dev
+```
+
+If you want LlamaIndex agent summaries, install the agent dependencies:
+
+```bash
+python3 -m venv .agent-venv
+source .agent-venv/bin/activate
+pip install -r web-app/backend/agent/requirements.txt
 ```
 
 Terminal 2 (frontend):
@@ -191,6 +200,16 @@ PORT=3001
 KICAD_MCP_SERVER_PATH=../../main.py
 KICAD_MCP_PYTHON=/path/to/python
 NODE_ENV=development
+CEREBRAS_API_KEY=your_cerebras_key_here
+CEREBRAS_MODEL=gpt-oss-120b
+# Optional: override the Cerebras OpenAI-compatible base URL.
+# CEREBRAS_API_BASE=https://api.cerebras.ai/v1
+# Optional: override the Python used for the LlamaIndex agent.
+# LLAMA_AGENT_PYTHON=/path/to/python
+# Optional: override the LlamaIndex agent script path.
+# LLAMA_AGENT_SCRIPT=/absolute/path/to/llamaindex_agent.py
+# Optional: timeout in milliseconds for the agent process.
+# LLAMA_AGENT_TIMEOUT_MS=45000
 ```
 
 Frontend environment variables:
