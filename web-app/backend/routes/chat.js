@@ -1,5 +1,4 @@
 import express from 'express';
-import mcpClient from '../services/mcpClient.js';
 import { runAgent } from '../services/llmAgent.js';
 
 const router = express.Router();
@@ -34,29 +33,20 @@ router.post('/message', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    let result = null;
-
-    try {
-      const agentResponse = await runAgent({
-        mode: 'chat',
-        message,
-        history,
-      });
-      if (agentResponse?.message) {
-        result = {
-          message: agentResponse.message,
-          files: agentResponse.files || null,
-          designId: agentResponse.design_id || null,
-        };
-      }
-    } catch (error) {
-      console.warn('LlamaIndex agent failed, falling back to mock response:', error.message);
+    const agentResponse = await runAgent({
+      mode: 'chat',
+      message,
+      history,
+    });
+    if (!agentResponse?.message) {
+      throw new Error('Agent response missing message');
     }
 
-    // Fallback to mock MCP response if agent is unavailable
-    if (!result) {
-      result = await mcpClient.processDesignRequest(message);
-    }
+    const result = {
+      message: agentResponse.message,
+      files: agentResponse.files || null,
+      designId: agentResponse.design_id || null,
+    };
 
     // Add assistant response to history
     const assistantMessage = {
@@ -120,17 +110,16 @@ router.delete('/history/:conversationId', (req, res) => {
 
 /**
  * GET /api/chat/tools
- * List available MCP tools
+ * List available tools (legacy)
  */
 router.get('/tools', async (req, res) => {
   try {
-    const tools = await mcpClient.listTools();
-    res.json({ tools });
+    res.json({ tools: [] });
   } catch (error) {
     console.error('Error fetching tools:', error);
     res.status(500).json({
-      error: 'Failed to fetch MCP tools',
-      message: error.message
+      error: 'Failed to fetch tools',
+      message: error.message,
     });
   }
 });
