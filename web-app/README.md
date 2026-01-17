@@ -1,14 +1,14 @@
-# 8090PCB Validation Interface
+# 8090PCB Firmware Planner
 
-A web-based validation UI that integrates with the KiCad MCP server to analyze uploaded KiCad designs, generate a validation report, and produce a firmware bring-up plan with per-component technical notes.
+A web-based firmware planning UI that analyzes raw KiCad files with a Cerebras-backed LLM, generates a firmware implementation plan, and produces a PRD-ready summary. It can also render the PCB via `kicad-cli`.
 
 ## Table of contents
 
 - Quick start
 - Prerequisites
-- MCP server setup
 - Running the app
-- Validation workflow
+- LLM agent setup
+- Planning workflow
 - Upload requirements and limits
 - Outputs
 - API
@@ -32,31 +32,21 @@ Open `http://localhost:3000`.
 ## Prerequisites
 
 - Node.js 16+ and npm
-- Python 3.8+ (for the KiCad MCP server)
-- Python 3.10+ (for the LlamaIndex agent, if enabled)
-- KiCad 9+ (for kicad-cli used by DRC)
+- Python 3.10+ (for the LlamaIndex agent)
+- KiCad 9+ (for `kicad-cli` render output)
 
-## MCP server setup
+## LLM agent setup
 
-The backend spawns the MCP server as a Python process per validation request. Make sure the MCP server dependencies are installed.
-
-From the repo root:
+The backend uses a Python LlamaIndex agent that calls the Cerebras OpenAI-compatible API.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
+python3 -m venv .agent-venv
+source .agent-venv/bin/activate
+pip install -r web-app/backend/agent/requirements.txt
 ```
 
-If you prefer uv:
-
-```bash
-uv venv
-source .venv/bin/activate
-uv pip install -e .
-```
-
-If KiCad is installed, ensure `kicad-cli` is in your PATH or available at the default KiCad install location so DRC can run.
+Make sure `kicad-cli` is available for PCB renders. On macOS the default path is:
+`/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`.
 
 ## Running the app
 
@@ -85,19 +75,19 @@ npm install
 npm run dev
 ```
 
-## Validation workflow
+## Planning workflow
 
 High-level flow:
 
 ```
 Upload KiCad files
    -> /api/pcb/validate
-   -> MCP tools (DRC, boundaries, netlist, patterns, BOM)
-   -> Report + firmware plan + component notes
+   -> LlamaIndex agent (Cerebras)
+   -> Firmware plan + PRD summary + PCB render
    -> Download artifacts
 ```
 
-The backend uses MCP tools when available and degrades gracefully if some inputs or tools are missing.
+The backend uses the LLM agent to derive firmware and PRD outputs directly from the uploaded files.
 
 ## Upload requirements and limits
 
@@ -126,18 +116,12 @@ Behavior notes:
 
 Generated files are stored in `web-app/backend/generated`:
 
-- `validation_<id>_report.md`: consolidated validation report
-- `validation_<id>_firmware_plan.md`: firmware bring-up plan
-- `validation_<id>_components.md`: per-component technical notes
+- `validation_<id>_firmware_plan.md`: firmware implementation plan
+- `validation_<id>_prd.md`: PRD-ready summary
+- `validation_<id>_render.svg`: PCB render (if `.kicad_pcb` is present)
 - `validation_<id>_summary.json`: machine-readable summary
 
 Uploads are stored in `web-app/backend/uploads/<validationId>`.
-
-Status levels:
-
-- `pass`: DRC and boundary checks show no issues
-- `review`: incomplete data or checks not run
-- `issues`: DRC or boundary issues detected
 
 ## API
 
@@ -162,16 +146,22 @@ Example response (summary):
   "success": true,
   "validationId": "validation_123456",
   "summary": {
-    "status": "issues",
+    "notes": ["Render failed: ..."],
     "counts": {
-      "components": 42,
-      "drcViolations": 3
+      "files": 3,
+      "bytes": 104857
     }
   },
+  "firmwarePlan": {
+    "overview": "..."
+  },
+  "prd": {
+    "productBrief": "..."
+  },
   "files": {
-    "report": "validation_123456_report.md",
     "firmwarePlan": "validation_123456_firmware_plan.md",
-    "components": "validation_123456_components.md",
+    "prd": "validation_123456_prd.md",
+    "render": "validation_123456_render.svg",
     "summary": "validation_123456_summary.json"
   }
 }
@@ -197,11 +187,16 @@ Backend environment variables (`web-app/backend/.env`):
 
 ```env
 PORT=3001
-KICAD_MCP_SERVER_PATH=../../main.py
-KICAD_MCP_PYTHON=/path/to/python
 NODE_ENV=development
 CEREBRAS_API_KEY=your_cerebras_key_here
 CEREBRAS_MODEL=gpt-oss-120b
+# Optional: override KiCad CLI path for render export
+KICAD_CLI_PATH=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
+# Optional: control layers used for SVG render export
+KICAD_RENDER_LAYERS=F.Cu,B.Cu,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts
+# Optional: limit raw KiCad payload size sent to LLM
+LLM_MAX_FILE_CHARS=120000
+LLM_MAX_TOTAL_CHARS=400000
 # Optional: override the Cerebras OpenAI-compatible base URL.
 # CEREBRAS_API_BASE=https://api.cerebras.ai/v1
 # Optional: override the Python used for the LlamaIndex agent.
@@ -223,7 +218,7 @@ The validator UI uses Framer Motion for subtle, premium animations:
 - Page-load stagger for major sections
 - Upload zone spring/glow on drag
 - Result reveal with enter transitions
-- Hover lift on stat cards and downloads
+- Hover lift on output cards
 
 The custom favicon lives at `web-app/frontend/public/favicon.svg`.
 
@@ -255,9 +250,9 @@ You can also serve the frontend build from a static host and point it at the bac
 ## Troubleshooting
 
 - `ECONNREFUSED` on port 3001: backend not running or wrong PORT.
-- `MCP server not found`: verify `KICAD_MCP_SERVER_PATH` and Python dependencies.
-- `kicad-cli not found`: install KiCad 9+ or add `kicad-cli` to PATH.
-- Empty output: check that `.kicad_pro` or `.kicad_sch` was uploaded.
+- `LlamaIndex agent failed`: verify `CEREBRAS_API_KEY` and install `web-app/backend/agent/requirements.txt`.
+- `kicad-cli not found`: install KiCad 9+ or set `KICAD_CLI_PATH`.
+- Empty output: check that `.kicad_pro`, `.kicad_sch`, or `.kicad_pcb` was uploaded.
 
 ## Legacy chat interface
 
