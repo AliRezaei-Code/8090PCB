@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    from llama_index.core import StorageContext, VectorStoreIndex, load_index_from_storage
+    from llama_index.core import StorageContext, VectorStoreIndex, load_index_from_storage, get_response_synthesizer
     from llama_index.core.llms import ChatMessage
     from llama_index.core.postprocessor import LLMRerank
     from llama_index.core.query_engine import RetrieverQueryEngine
@@ -76,13 +76,13 @@ def get_env(name: str, default: Optional[str] = None) -> Optional[str]:
 
 def build_ollama_llm(model: str) -> Ollama:
     base_url = get_env("OLLAMA_BASE_URL", "http://localhost:11434")
-    return Ollama(model=model, base_url=base_url, temperature=0.2)
+    return Ollama(model=model, base_url=base_url, temperature=0.2, request_timeout=360.0)
 
 
 def build_embed_model() -> OllamaEmbedding:
     base_url = get_env("OLLAMA_BASE_URL", "http://localhost:11434")
     embed_model = get_env("OLLAMA_EMBED_MODEL", "qwen3-embedding:0.6b")
-    return OllamaEmbedding(model_name=embed_model, base_url=base_url)
+    return OllamaEmbedding(model_name=embed_model, base_url=base_url, request_timeout=360.0)
 
 
 def limit_history(history: List[Dict[str, Any]], max_items: int = 8) -> List[Dict[str, Any]]:
@@ -132,7 +132,7 @@ def resolve_docs_dir() -> Path:
     from_env = get_env("FIRMWARE_DOCS_DIR")
     if from_env:
         return Path(from_env).expanduser().resolve()
-    return Path(__file__).resolve().parent.parent / "stm32"
+    return Path(__file__).resolve().parent.parent.parent / "stm32"
 
 
 def resolve_index_dir() -> Path:
@@ -217,17 +217,21 @@ def build_stm32_index(embed_model: OllamaEmbedding) -> VectorStoreIndex:
 
     index = VectorStoreIndex.from_documents(chunked_docs, embed_model=embed_model)
     index.storage_context.persist(persist_dir=str(index_dir))
+    print(f"DEBUG: Index persisted to {index_dir}")
+    print(f"DEBUG: Docstore exists? {(index_dir / 'docstore.json').exists()}")
     return index
 
 
-def build_rag_context(embed_model: OllamaEmbedding, rerank_llm: Ollama, query: str) -> str:
+def build_rag_context(embed_model: OllamaEmbedding, rerank_llm: Ollama, llm: Ollama, query: str) -> str:
     index = build_stm32_index(embed_model)
     retriever = index.as_retriever(similarity_top_k=8)
     reranker = LLMRerank(top_n=4, llm=rerank_llm)
+    
+    synthesizer = get_response_synthesizer(response_mode="compact", llm=llm)
     engine = RetrieverQueryEngine(
         retriever=retriever,
         node_postprocessors=[reranker],
-        response_mode="compact",
+        response_synthesizer=synthesizer,
     )
     response = engine.query(query)
     return str(response)
@@ -244,7 +248,7 @@ def run_firmware(llm: Ollama, payload: Dict[str, Any]) -> Dict[str, Any]:
         "STM32 firmware bring-up checklist covering clocks, power rails, boot pins, "
         "debug interfaces, peripheral initialization, and safety checks."
     )
-    rag_context = build_rag_context(embed_model, rerank_llm, rag_query)
+    rag_context = build_rag_context(embed_model, rerank_llm, llm, rag_query)
     messages = [
         ChatMessage(role="system", content=SYSTEM_FIRMWARE_PROMPT),
         ChatMessage(
@@ -262,6 +266,7 @@ def run_firmware(llm: Ollama, payload: Dict[str, Any]) -> Dict[str, Any]:
     content = response.message.content if response and response.message else ""
     parsed = extract_json(content)
     if not parsed:
+        print(f"DEBUG: Failed to parse JSON. Raw content:\n{content}")
         raise RuntimeError("Agent returned invalid JSON")
     return parsed
 
