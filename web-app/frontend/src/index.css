@@ -25,6 +25,26 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: radial-gradient(circle at top, #fff3d6 0%, #f6f1e8 45%, #e8eff7 100%);
+  scrollbar-color: #f97316 #f6f1e8;
+  scrollbar-width: thin;
+}
+
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+  background: #f6f1e8;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(140deg, #f97316, #0ea5a4);
+  border-radius: 999px;
+  border: 2px solid #f6f1e8;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(140deg, #fb923c, #14b8a6);
 }
 
 @keyframes float {
