@@ -51,5 +51,6 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 8090PCB Backend server running on port ${PORT}`);
-  console.log(`📡 MCP Server Path: ${process.env.KICAD_MCP_SERVER_PATH || 'Not configured'}`);
+  console.log(`🧠 Cerebras model: ${process.env.CEREBRAS_MODEL || 'not set'}`);
+  console.log(`🖼️  KiCad CLI: ${process.env.KICAD_CLI_PATH || 'kicad-cli (PATH)'}`);
 });
