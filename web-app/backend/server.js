@@ -51,6 +51,6 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 8090PCB Backend server running on port ${PORT}`);
-  console.log(`🧠 Cerebras model: ${process.env.CEREBRAS_MODEL || 'not set'}`);
+  console.log(`🧠 Ollama model: ${process.env.OLLAMA_LLM_MODEL || 'not set'}`);
   console.log(`🖼️  KiCad CLI: ${process.env.KICAD_CLI_PATH || 'kicad-cli (PATH)'}`);
 });
