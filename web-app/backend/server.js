@@ -6,6 +6,7 @@ import { dirname, join } from 'path';
 import fs from 'fs';
 import chatRoutes from './routes/chat.js';
 import fileRoutes from './routes/files.js';
+import pcbRoutes from './routes/pcb.js';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ dirs.forEach(dir => {
 // Routes
 app.use('/api/chat', chatRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/pcb', pcbRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
