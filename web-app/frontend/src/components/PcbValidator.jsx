@@ -67,13 +67,13 @@ const PcbValidator = () => {
       return {
         label: 'Issues Found',
         icon: AlertTriangle,
-        tone: 'bg-rose-500/15 text-rose-100 border-rose-400/40',
+        tone: 'bg-rose-500/20 text-rose-100 border-rose-400/50',
       };
     }
     return {
       label: 'Needs Review',
       icon: FileCheck2,
-      tone: 'bg-purple-600/15 text-purple-100 border-purple-400/40',
+      tone: 'bg-rose-500/15 text-rose-100 border-rose-400/40',
     };
   }, [result]);
 
@@ -340,13 +340,7 @@ const PcbValidator = () => {
                   exit="hidden"
                 >
                   <motion.section className="space-y-4" variants={fadeUpVariants}>
-                    <motion.div
-                      className="grid gap-4 md:grid-cols-4"
-                      layout
-                      variants={statListVariants}
-                      initial="hidden"
-                      animate="show"
-                    >
+                    <motion.div className="grid gap-4 md:grid-cols-4" layout variants={statListVariants}>
                       <motion.div
                         className={`stat-card ${statusConfig.tone}`}
                         variants={statItemVariants}
@@ -359,44 +353,44 @@ const PcbValidator = () => {
                         </div>
                       </motion.div>
                       <motion.div
-                        className="stat-card"
+                        className="stat-card text-rose-100 border-rose-400/40 bg-rose-500/10"
                         variants={statItemVariants}
                         whileHover={{ y: -4 }}
                       >
-                        <CircuitBoard className="w-6 h-6 text-purple-300" />
+                        <CircuitBoard className="w-6 h-6 text-rose-200" />
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">
+                          <p className="text-xs uppercase tracking-[0.2em] text-rose-200">
                             Components
                           </p>
-                          <p className="text-lg font-semibold text-purple-50">
+                          <p className="text-lg font-semibold text-rose-100">
                             {fileSummary?.components ?? '--'}
                           </p>
                         </div>
                       </motion.div>
                       <motion.div
-                        className="stat-card"
+                        className="stat-card text-rose-100 border-rose-400/40 bg-rose-500/10"
                         variants={statItemVariants}
                         whileHover={{ y: -4 }}
                       >
-                        <AlertTriangle className="w-6 h-6 text-purple-300" />
+                        <AlertTriangle className="w-6 h-6 text-rose-200" />
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">DRC</p>
-                          <p className="text-lg font-semibold text-purple-50">
+                          <p className="text-xs uppercase tracking-[0.2em] text-rose-200">DRC</p>
+                          <p className="text-lg font-semibold text-rose-100">
                             {fileSummary?.drcViolations ?? '--'}
                           </p>
                         </div>
                       </motion.div>
                       <motion.div
-                        className="stat-card"
+                        className="stat-card text-rose-100 border-rose-400/40 bg-rose-500/10"
                         variants={statItemVariants}
                         whileHover={{ y: -4 }}
                       >
-                        <Cpu className="w-6 h-6 text-purple-300" />
+                        <Cpu className="w-6 h-6 text-rose-200" />
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">
+                          <p className="text-xs uppercase tracking-[0.2em] text-rose-200">
                             Patterns
                           </p>
-                          <p className="text-lg font-semibold text-purple-50">
+                          <p className="text-lg font-semibold text-rose-100">
                             {fileSummary?.patterns ?? '--'}
                           </p>
                         </div>
@@ -405,7 +399,7 @@ const PcbValidator = () => {
 
                     {result.summary?.notes?.length > 0 && (
                       <motion.div
-                        className="text-sm text-purple-300"
+                        className="text-sm text-rose-200"
                         variants={itemVariants}
                         initial="hidden"
                         animate="show"
@@ -418,7 +412,7 @@ const PcbValidator = () => {
 
                     {result.mcp?.available === false && (
                       <motion.div
-                        className="border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+                        className="border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
                         variants={itemVariants}
                       >
                         MCP server could not be reached. Validation ran with limited data.
