@@ -60,20 +60,20 @@ const PcbValidator = () => {
       return {
         label: 'Pass',
         icon: ShieldCheck,
-        tone: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        tone: 'bg-purple-500/15 text-purple-100 border-purple-400/40',
       };
     }
     if (status === 'issues') {
       return {
         label: 'Issues Found',
         icon: AlertTriangle,
-        tone: 'bg-rose-100 text-rose-700 border-rose-200',
+        tone: 'bg-rose-500/15 text-rose-100 border-rose-400/40',
       };
     }
     return {
       label: 'Needs Review',
       icon: FileCheck2,
-      tone: 'bg-amber-100 text-amber-700 border-amber-200',
+      tone: 'bg-purple-600/15 text-purple-100 border-purple-400/40',
     };
   }, [result]);
 
@@ -181,11 +181,14 @@ const PcbValidator = () => {
 
         <motion.header className="relative z-10 px-6 pt-12 pb-10" variants={fadeUpVariants}>
           <div className="max-w-6xl mx-auto">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">8090PCB Validator</p>
-            <h1 className="mt-4 text-4xl md:text-6xl font-semibold text-slate-900 leading-tight">
-              Validate KiCad boards, then ship firmware with confidence.
+            <div className="flex items-center gap-3 text-purple-100">
+              <img src="/favicon.svg" alt="Omni Board logo" className="w-9 h-9" />
+              <span className="text-xs uppercase tracking-[0.3em]">Omni Board</span>
+            </div>
+            <h1 className="mt-4 text-4xl md:text-6xl font-semibold text-purple-50 leading-tight">
+              Omni Board validates KiCad designs with firmware-ready precision.
             </h1>
-            <p className="mt-4 max-w-2xl text-lg text-slate-600">
+            <p className="mt-4 max-w-2xl text-lg text-purple-200">
               Upload your KiCad project files and get a structured validation report, firmware
               bring-up plan, and technical notes for every component.
             </p>
@@ -197,8 +200,8 @@ const PcbValidator = () => {
             <motion.section className="glass-card" variants={fadeUpVariants}>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-slate-900">Upload design files</h2>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <h2 className="text-xl font-semibold text-purple-100">Upload design files</h2>
+                  <p className="text-sm text-purple-300 mt-1">
                     Recommended: .kicad_pro + .kicad_pcb + .kicad_sch
                   </p>
                 </div>
@@ -223,23 +226,24 @@ const PcbValidator = () => {
 
               <motion.label
                 className={`upload-zone ${isDragging ? 'upload-zone-active' : ''}`}
+                onMouseMove={(event) => {
+                  if (shouldReduceMotion) return;
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const x = (event.clientX - rect.left) / rect.width - 0.5;
+                  const y = (event.clientY - rect.top) / rect.height - 0.5;
+                  event.currentTarget.style.setProperty('--tilt-x', `${(x * 8).toFixed(2)}deg`);
+                  event.currentTarget.style.setProperty('--tilt-y', `${(-y * 8).toFixed(2)}deg`);
+                }}
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.setProperty('--tilt-x', '0deg');
+                  event.currentTarget.style.setProperty('--tilt-y', '0deg');
+                }}
                 onDragOver={(event) => {
                   event.preventDefault();
                   setIsDragging(true);
                 }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
-                animate={
-                  shouldReduceMotion
-                    ? {}
-                    : {
-                        scale: isDragging ? 1.02 : 1,
-                        boxShadow: isDragging
-                          ? '0 30px 60px -30px rgba(249, 115, 22, 0.45)'
-                          : '0 12px 32px -24px rgba(15, 23, 42, 0.3)',
-                      }
-                }
-                transition={{ type: 'spring', stiffness: 180, damping: 20 }}
               >
                 <input
                   type="file"
@@ -249,11 +253,11 @@ const PcbValidator = () => {
                   onChange={handleFileInput}
                 />
                 <div className="flex flex-col items-center text-center">
-                  <UploadCloud className="w-8 h-8 text-slate-400" />
-                  <p className="mt-3 text-sm text-slate-600">
+                  <UploadCloud className="w-8 h-8 text-purple-300" />
+                  <p className="mt-3 text-sm text-purple-200">
                     Drag and drop files here, or click to browse
                   </p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-purple-400">
                     Accepted: {ACCEPTED_EXTENSIONS.join(', ')}
                   </p>
                 </div>
@@ -275,10 +279,10 @@ const PcbValidator = () => {
                         variants={itemVariants}
                         layout
                       >
-                        <span className="truncate text-sm text-slate-700">{file.name}</span>
+                        <span className="truncate text-sm text-purple-100">{file.name}</span>
                         <button
                           type="button"
-                          className="text-slate-400 hover:text-rose-500"
+                          className="text-purple-300 hover:text-purple-100"
                           onClick={() => removeFile(file)}
                           aria-label={`Remove ${file.name}`}
                         >
@@ -293,7 +297,7 @@ const PcbValidator = () => {
               <AnimatePresence>
                 {error && (
                   <motion.p
-                    className="mt-4 text-sm text-rose-600"
+                    className="mt-4 text-sm text-rose-200"
                     initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -8 }}
@@ -327,49 +331,53 @@ const PcbValidator = () => {
                         </div>
                       </motion.div>
                       <motion.div
-                        className="stat-card bg-white/70 text-slate-700 border-slate-200"
+                        className="stat-card"
                         variants={itemVariants}
                         whileHover={{ y: -4 }}
                       >
-                        <CircuitBoard className="w-6 h-6 text-slate-500" />
+                        <CircuitBoard className="w-6 h-6 text-purple-300" />
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">
                             Components
                           </p>
-                          <p className="text-lg font-semibold">{fileSummary?.components ?? '--'}</p>
+                          <p className="text-lg font-semibold text-purple-50">
+                            {fileSummary?.components ?? '--'}
+                          </p>
                         </div>
                       </motion.div>
                       <motion.div
-                        className="stat-card bg-white/70 text-slate-700 border-slate-200"
+                        className="stat-card"
                         variants={itemVariants}
                         whileHover={{ y: -4 }}
                       >
-                        <AlertTriangle className="w-6 h-6 text-slate-500" />
+                        <AlertTriangle className="w-6 h-6 text-purple-300" />
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">DRC</p>
-                          <p className="text-lg font-semibold">
+                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">DRC</p>
+                          <p className="text-lg font-semibold text-purple-50">
                             {fileSummary?.drcViolations ?? '--'}
                           </p>
                         </div>
                       </motion.div>
                       <motion.div
-                        className="stat-card bg-white/70 text-slate-700 border-slate-200"
+                        className="stat-card"
                         variants={itemVariants}
                         whileHover={{ y: -4 }}
                       >
-                        <Cpu className="w-6 h-6 text-slate-500" />
+                        <Cpu className="w-6 h-6 text-purple-300" />
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                          <p className="text-xs uppercase tracking-[0.2em] text-purple-300">
                             Patterns
                           </p>
-                          <p className="text-lg font-semibold">{fileSummary?.patterns ?? '--'}</p>
+                          <p className="text-lg font-semibold text-purple-50">
+                            {fileSummary?.patterns ?? '--'}
+                          </p>
                         </div>
                       </motion.div>
                     </motion.div>
 
                     {result.summary?.notes?.length > 0 && (
                       <motion.div
-                        className="text-sm text-slate-500"
+                        className="text-sm text-purple-300"
                         variants={itemVariants}
                         initial="hidden"
                         animate="show"
@@ -382,7 +390,7 @@ const PcbValidator = () => {
 
                     {result.mcp?.available === false && (
                       <motion.div
-                        className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+                        className="border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
                         variants={itemVariants}
                       >
                         MCP server could not be reached. Validation ran with limited data.
@@ -391,8 +399,8 @@ const PcbValidator = () => {
                   </motion.section>
 
                   <motion.section className="glass-card" variants={fadeUpVariants}>
-                    <h2 className="text-xl font-semibold text-slate-900">Validation outputs</h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <h2 className="text-xl font-semibold text-purple-100">Validation outputs</h2>
+                    <p className="mt-1 text-sm text-purple-300">
                       Download the generated report, firmware plan, and component notes.
                     </p>
                     <motion.div className="mt-5 grid gap-4 md:grid-cols-3" variants={listVariants}>
@@ -406,17 +414,21 @@ const PcbValidator = () => {
 
                   <motion.section className="grid gap-6 md:grid-cols-2" variants={fadeUpVariants}>
                     <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-slate-900">DRC overview</h3>
+                      <h3 className="text-lg font-semibold text-purple-100">DRC overview</h3>
                       {drcCategories.length === 0 ? (
-                        <p className="mt-3 text-sm text-slate-500">
+                        <p className="mt-3 text-sm text-purple-300">
                           No DRC categories available yet. Upload a full project to run DRC checks.
                         </p>
                       ) : (
-                        <motion.ul className="mt-4 space-y-2 text-sm text-slate-600" variants={listVariants}>
+                        <motion.ul className="mt-4 space-y-2 text-sm text-purple-200" variants={listVariants}>
                           {drcCategories.map(([name, count]) => (
-                            <motion.li key={name} variants={itemVariants} className="flex items-center justify-between gap-4">
+                            <motion.li
+                              key={name}
+                              variants={itemVariants}
+                              className="flex items-center justify-between gap-4"
+                            >
                               <span className="truncate">{name}</span>
-                              <span className="font-semibold text-slate-700">{count}</span>
+                              <span className="font-semibold text-purple-100">{count}</span>
                             </motion.li>
                           ))}
                         </motion.ul>
@@ -424,14 +436,14 @@ const PcbValidator = () => {
                     </motion.div>
 
                     <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-slate-900">Boundary issues</h3>
+                      <h3 className="text-lg font-semibold text-purple-100">Boundary issues</h3>
                       {boundaryIssues.length === 0 ? (
-                        <p className="mt-3 text-sm text-slate-500">No boundary issues reported.</p>
+                        <p className="mt-3 text-sm text-purple-300">No boundary issues reported.</p>
                       ) : (
-                        <motion.ul className="mt-4 space-y-2 text-sm text-slate-600" variants={listVariants}>
+                        <motion.ul className="mt-4 space-y-2 text-sm text-purple-200" variants={listVariants}>
                           {boundaryIssues.map((issue, index) => (
                             <motion.li key={`${issue.component_ref}-${index}`} variants={itemVariants}>
-                              <span className="font-semibold text-slate-700">
+                              <span className="font-semibold text-purple-100">
                                 {issue.component_ref}
                               </span>
                               {`: ${issue.message}`}
@@ -444,15 +456,15 @@ const PcbValidator = () => {
 
                   <motion.section className="grid gap-6 md:grid-cols-2" variants={fadeUpVariants}>
                     <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-slate-900">Firmware plan</h3>
-                      <p className="mt-2 text-sm text-slate-500">{result.firmwarePlan?.overview}</p>
+                      <h3 className="text-lg font-semibold text-purple-100">Firmware plan</h3>
+                      <p className="mt-2 text-sm text-purple-300">{result.firmwarePlan?.overview}</p>
                       <motion.div className="mt-4 space-y-4" variants={listVariants}>
                         {(result.firmwarePlan?.phases || []).map((phase) => (
                           <motion.div key={phase.phase} className="phase-card" variants={itemVariants}>
-                            <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.2em]">
+                            <h4 className="text-sm font-semibold text-purple-200 uppercase tracking-[0.2em]">
                               {phase.phase}
                             </h4>
-                            <ul className="mt-2 text-sm text-slate-600 list-disc list-inside space-y-1">
+                            <ul className="mt-2 text-sm text-purple-200 list-disc list-inside space-y-1">
                               {phase.tasks.map((task) => (
                                 <li key={task}>{task}</li>
                               ))}
@@ -463,10 +475,10 @@ const PcbValidator = () => {
                     </motion.div>
 
                     <motion.div className="glass-card" variants={itemVariants}>
-                      <h3 className="text-lg font-semibold text-slate-900">
+                      <h3 className="text-lg font-semibold text-purple-100">
                         Component technical notes
                       </h3>
-                      <p className="mt-2 text-sm text-slate-500">
+                      <p className="mt-2 text-sm text-purple-300">
                         Key components and their firmware-facing roles.
                       </p>
                       <motion.div className="mt-4 space-y-3" variants={listVariants}>
@@ -478,14 +490,14 @@ const PcbValidator = () => {
                             layout
                           >
                             <div>
-                              <p className="text-sm font-semibold text-slate-700">
+                              <p className="text-sm font-semibold text-purple-100">
                                 {component.reference} · {component.category}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-purple-300">
                                 {component.value || 'No value'}
                               </p>
                             </div>
-                            <p className="text-xs text-slate-500 max-w-xs">
+                            <p className="text-xs text-purple-300 max-w-xs">
                               {component.description}
                             </p>
                           </motion.div>
@@ -494,7 +506,7 @@ const PcbValidator = () => {
                       {result.components?.list?.length > 18 && (
                         <button
                           type="button"
-                          className="mt-4 text-sm font-semibold text-slate-600 hover:text-slate-900"
+                          className="mt-4 text-sm font-semibold text-purple-200 hover:text-purple-50"
                           onClick={() => setShowAllComponents((prev) => !prev)}
                         >
                           {showAllComponents ? 'Show fewer components' : 'Show all components'}

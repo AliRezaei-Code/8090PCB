@@ -70,18 +70,18 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
+    <div className="flex flex-col min-h-screen bg-[#140a24] text-purple-100">
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700 p-4">
+      <header className="bg-[#1b0f2f] border-b border-purple-500/20 p-4">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white">8090PCB Chat Interface</h1>
-            <p className="text-sm text-gray-400">KiCad MCP Integration</p>
+            <h1 className="text-2xl font-bold text-purple-50">Omni Board Chat</h1>
+            <p className="text-sm text-purple-300">KiCad MCP Integration</p>
           </div>
           {messages.length > 0 && (
             <button
               onClick={handleClearChat}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white rounded-none transition-colors"
             >
               <Trash2 className="w-4 h-4" />
               <span>Clear</span>
@@ -94,14 +94,14 @@ const ChatInterface = () => {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-5xl mx-auto">
           {messages.length === 0 && (
-            <div className="text-center text-gray-500 mt-20">
-              <h2 className="text-xl mb-4">Welcome to 8090PCB</h2>
+            <div className="text-center text-purple-300 mt-20">
+              <h2 className="text-xl mb-4 text-purple-100">Welcome to Omni Board</h2>
               <p className="mb-2">Ask me to design a PCB circuit, and I'll generate:</p>
               <ul className="text-sm space-y-1">
                 <li>✓ KiCad PCB file (.kicad_pcb)</li>
                 <li>✓ Design description for PM tools</li>
               </ul>
-              <p className="mt-6 text-xs text-gray-600">
+              <p className="mt-6 text-xs text-purple-400">
                 Example: "Design a blinking LED circuit with a 555 timer"
               </p>
             </div>
@@ -129,7 +129,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Input */}
-      <div className="bg-gray-800 border-t border-gray-700 p-4">
+      <div className="bg-[#1b0f2f] border-t border-purple-500/20 p-4">
         <form onSubmit={handleSendMessage} className="max-w-5xl mx-auto">
           <div className="flex space-x-4">
             <input
@@ -137,13 +137,13 @@ const ChatInterface = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Describe your PCB design requirements..."
-              className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 bg-[#241336] text-purple-100 border border-purple-500/30 rounded-none px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/60"
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={isLoading || !inputValue.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg px-6 py-3 flex items-center space-x-2 transition-colors"
+              className="bg-purple-700 hover:bg-purple-600 disabled:bg-purple-900 disabled:cursor-not-allowed text-white rounded-none px-6 py-3 flex items-center space-x-2 transition-colors"
             >
               <Send className="w-5 h-5" />
               <span>Send</span>

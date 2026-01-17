@@ -9,7 +9,7 @@ const ChatMessage = ({ message, isUser }) => {
         
         {!isUser && message.files && (
           <div className="mt-4 space-y-2">
-            <p className="text-xs text-gray-300 mb-2">Generated Files:</p>
+            <p className="text-xs text-purple-200 mb-2">Generated Files:</p>
             {message.files.cad && (
               <FileCard
                 filename={message.files.cad}
@@ -27,7 +27,7 @@ const ChatMessage = ({ message, isUser }) => {
           </div>
         )}
         
-        <p className="text-xs text-gray-400 mt-2">
+        <p className="text-xs text-purple-300 mt-2">
           {new Date(message.timestamp).toLocaleTimeString()}
         </p>
       </div>

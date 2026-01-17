@@ -10,15 +10,15 @@ const FileCard = ({ filename, designId, type }) => {
 
   const getIcon = () => {
     if (filename.endsWith('.kicad_pcb')) {
-      return <File className="w-6 h-6 text-blue-400" />;
+      return <File className="w-6 h-6 text-purple-300" />;
     }
     if (filename.endsWith('.md')) {
-      return <FileText className="w-6 h-6 text-green-400" />;
+      return <FileText className="w-6 h-6 text-purple-200" />;
     }
     if (filename.endsWith('.json')) {
-      return <FileJson className="w-6 h-6 text-amber-500" />;
+      return <FileJson className="w-6 h-6 text-purple-400" />;
     }
-    return <File className="w-6 h-6 text-gray-400" />;
+    return <File className="w-6 h-6 text-purple-300" />;
   };
 
   const getLabel = () => {
@@ -49,11 +49,11 @@ const FileCard = ({ filename, designId, type }) => {
         <div className="flex items-center space-x-3">
           {getIcon()}
           <div>
-            <p className="font-medium text-sm">{getLabel()}</p>
-            <p className="text-xs text-gray-400">{filename}</p>
+            <p className="font-medium text-sm text-purple-100">{getLabel()}</p>
+            <p className="text-xs text-purple-400">{filename}</p>
           </div>
         </div>
-        <Download className="w-5 h-5 text-gray-400 hover:text-blue-400" />
+        <Download className="w-5 h-5 text-purple-300 hover:text-purple-100" />
       </div>
     </div>
   );

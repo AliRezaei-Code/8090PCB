@@ -39,7 +39,7 @@ const BackgroundParticles = () => {
         y: (Math.random() - 0.5) * height,
         z: Math.random() * DEPTH,
         radius: Math.random() * 2.4 + 0.6,
-        hue: 18 + Math.random() * 200,
+        hue: 265 + Math.random() * 30,
       }));
     };
 
@@ -50,6 +50,7 @@ const BackgroundParticles = () => {
       const width = canvas.width;
       const height = canvas.height;
       context.clearRect(0, 0, width, height);
+      context.globalCompositeOperation = 'lighter';
 
       const centerX = width / 2;
       const centerY = height / 2;
@@ -82,11 +83,11 @@ const BackgroundParticles = () => {
         const x2d = rotatedX * scale + centerX;
         const y2d = rotatedY * scale + centerY;
 
-        const alpha = Math.min(1, Math.max(0.15, 1 - depthZ / DEPTH));
-        const size = particle.radius * scale * 1.2;
+        const alpha = Math.min(1, Math.max(0.25, 1 - depthZ / DEPTH));
+        const size = particle.radius * scale * 1.4;
 
         context.beginPath();
-        context.fillStyle = `hsla(${particle.hue}, 68%, 55%, ${alpha})`;
+        context.fillStyle = `hsla(${particle.hue}, 70%, 70%, ${alpha})`;
         context.arc(x2d, y2d, size, 0, Math.PI * 2);
         context.fill();
       }
