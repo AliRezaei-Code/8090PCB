@@ -143,20 +143,18 @@ def resolve_index_dir() -> Path:
 
 
 def recursive_chunk(text: str, max_chars: int, overlap: int) -> List[str]:
-    if len(text) <= max_chars:
-        return [text]
-
     separators = ["\n\n", "\n", ". ", " "]
-    chunks: List[str] = []
-    buffer = text
 
-    for sep in separators:
-        if len(buffer) <= max_chars:
-            break
-        parts = buffer.split(sep)
+    def split_with_separators(value: str, seps: List[str]) -> List[str]:
+        if len(value) <= max_chars or not seps:
+            return [value.strip()]
+
+        sep = seps[0]
+        parts = value.split(sep)
         if len(parts) == 1:
-            continue
+            return split_with_separators(value, seps[1:])
 
+        chunks: List[str] = []
         current = ""
         for part in parts:
             part = part.strip()
@@ -165,23 +163,22 @@ def recursive_chunk(text: str, max_chars: int, overlap: int) -> List[str]:
             candidate = f"{current}{sep if current else ''}{part}"
             if len(candidate) > max_chars:
                 if current:
-                    chunks.append(current)
+                    chunks.extend(split_with_separators(current, seps[1:]))
                 current = part
             else:
                 current = candidate
         if current:
-            chunks.append(current)
-        buffer = "\n".join(chunks)
+            chunks.extend(split_with_separators(current, seps[1:]))
+        return chunks
 
-    if len(buffer) > max_chars and not chunks:
-        for i in range(0, len(buffer), max_chars):
-            chunks.append(buffer[i : i + max_chars])
+    chunks = split_with_separators(text, separators)
+    chunks = [chunk for chunk in chunks if chunk]
 
-    with_overlap: List[str] = []
-    for chunk in chunks:
-        if not with_overlap:
-            with_overlap.append(chunk)
-            continue
+    if not chunks:
+        return []
+
+    with_overlap: List[str] = [chunks[0]]
+    for chunk in chunks[1:]:
         tail = with_overlap[-1]
         overlap_text = tail[-overlap:] if overlap > 0 else ""
         with_overlap.append(f"{overlap_text}{chunk}")
@@ -196,6 +193,9 @@ def build_stm32_index(embed_model: OllamaEmbedding) -> VectorStoreIndex:
     if (index_dir / "docstore.json").exists():
         storage = StorageContext.from_defaults(persist_dir=str(index_dir))
         return load_index_from_storage(storage)
+
+    if not docs_dir.exists():
+        return VectorStoreIndex.from_documents([], embed_model=embed_model)
 
     reader = SimpleDirectoryReader(
         input_dir=str(docs_dir),
