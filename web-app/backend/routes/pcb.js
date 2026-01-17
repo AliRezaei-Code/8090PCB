@@ -56,7 +56,7 @@ router.post('/validate', upload.array('files'), async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('PCB validation error:', error);
+    console.error('PCB planning error:', error);
     res.status(500).json({
       error: 'Failed to generate plan',
       message: error.message,
