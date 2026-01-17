@@ -1,6 +1,6 @@
 # 8090PCB Firmware Planner
 
-A web-based firmware planning UI that analyzes raw KiCad files with a Cerebras-backed LLM, generates a firmware implementation plan, and produces a PRD-ready summary. It can also render the PCB via `kicad-cli`.
+A web-based firmware planning UI that analyzes raw KiCad files with an Ollama-backed LLM, generates a firmware implementation plan, and produces a PRD-ready summary. It can also render the PCB via `kicad-cli`.
 
 ## Table of contents
 
@@ -37,7 +37,7 @@ Open `http://localhost:3000`.
 
 ## LLM agent setup
 
-The backend uses a Python LlamaIndex agent that calls the Cerebras OpenAI-compatible API.
+The backend uses a Python LlamaIndex agent that calls Ollama for LLM, embeddings, and reranking.
 
 ```bash
 python3 -m venv .agent-venv
@@ -47,6 +47,14 @@ pip install -r web-app/backend/agent/requirements.txt
 
 Make sure `kicad-cli` is available for PCB renders. On macOS the default path is:
 `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`.
+
+Ensure Ollama is running and the required models are pulled:
+
+```bash
+ollama pull gpt-oss:20b
+ollama pull qwen3-embedding:0.6b
+ollama pull sam860/qwen3-reranker:0.6b-F16
+```
 
 ## Running the app
 
@@ -87,7 +95,7 @@ Upload KiCad files
    -> Download artifacts
 ```
 
-The backend uses the LLM agent to derive firmware and PRD outputs directly from the uploaded files.
+The backend uses the LLM agent to derive firmware and PRD outputs directly from the uploaded files and STM32 reference docs.
 
 ## Upload requirements and limits
 
@@ -188,8 +196,15 @@ Backend environment variables (`web-app/backend/.env`):
 ```env
 PORT=3001
 NODE_ENV=development
-CEREBRAS_API_KEY=your_cerebras_key_here
-CEREBRAS_MODEL=gpt-oss-120b
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_LLM_MODEL=gpt-oss:20b
+OLLAMA_EMBED_MODEL=qwen3-embedding:0.6b
+OLLAMA_RERANK_MODEL=sam860/qwen3-reranker:0.6b-F16
+# RAG configuration
+FIRMWARE_DOCS_DIR=../../stm32
+FIRMWARE_INDEX_DIR=./agent/index_stm32
+RAG_CHUNK_SIZE=1400
+RAG_CHUNK_OVERLAP=180
 # Optional: override KiCad CLI path for render export
 KICAD_CLI_PATH=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
 # Optional: control layers used for SVG render export
@@ -197,8 +212,6 @@ KICAD_RENDER_LAYERS=F.Cu,B.Cu,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts
 # Optional: limit raw KiCad payload size sent to LLM
 LLM_MAX_FILE_CHARS=120000
 LLM_MAX_TOTAL_CHARS=400000
-# Optional: override the Cerebras OpenAI-compatible base URL.
-# CEREBRAS_API_BASE=https://api.cerebras.ai/v1
 # Optional: override the Python used for the LlamaIndex agent.
 # LLAMA_AGENT_PYTHON=/path/to/python
 # Optional: override the LlamaIndex agent script path.
