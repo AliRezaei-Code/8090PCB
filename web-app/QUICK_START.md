@@ -28,6 +28,13 @@ source .agent-venv/bin/activate
 pip install -r web-app/backend/agent/requirements.txt
 ```
 
+**Ollama models:**
+```bash
+ollama pull gpt-oss:20b
+ollama pull qwen3-embedding:0.6b
+ollama pull sam860/qwen3-reranker:0.6b-F16
+```
+
 **Frontend (new terminal):**
 ```bash
 cd web-app/frontend
