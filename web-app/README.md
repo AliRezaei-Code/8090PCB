@@ -59,7 +59,7 @@ npm install
 npm run dev
 ```
 
-If you want LlamaIndex agent summaries, install the agent dependencies:
+Install the LlamaIndex agent dependencies:
 
 ```bash
 python3 -m venv .agent-venv

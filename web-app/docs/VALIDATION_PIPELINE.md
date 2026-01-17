@@ -13,6 +13,8 @@ This document explains how the backend turns uploaded KiCad files into a firmwar
 5. Backend generates a KiCad SVG render (if `.kicad_pcb` is present).
 6. Files are written to `backend/generated/` and returned to the UI.
 
+Render settings can be adjusted with `KICAD_CLI_PATH` and `KICAD_RENDER_LAYERS`.
+
 ## LLM plan generation
 
 The LlamaIndex agent receives:

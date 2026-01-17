@@ -39,6 +39,10 @@ Browser
   - Spawns the LlamaIndex agent for chat/summary generation
   - Uses `CEREBRAS_API_KEY` and `CEREBRAS_MODEL`
 
+- `web-app/backend/services/kicadRender.js`
+  - Invokes `kicad-cli` to export SVG renders
+  - Uses `KICAD_CLI_PATH` and `KICAD_RENDER_LAYERS`
+
 ## Frontend modules
 
 - `web-app/frontend/src/components/PcbValidator.jsx`
