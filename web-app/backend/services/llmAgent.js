@@ -10,7 +10,6 @@ const DEFAULT_TIMEOUT_MS = 45000;
 function getPythonCommand() {
   return (
     process.env.LLAMA_AGENT_PYTHON ||
-    process.env.KICAD_MCP_PYTHON ||
     process.env.PYTHON ||
     'python3'
   );
@@ -40,7 +39,9 @@ function parseAgentOutput(output) {
 }
 
 export async function runAgent(payload) {
-  if (!process.env.CEREBRAS_API_KEY) return null;
+  if (!process.env.CEREBRAS_API_KEY) {
+    throw new Error('CEREBRAS_API_KEY is not set');
+  }
 
   const timeoutMs = Number(process.env.LLAMA_AGENT_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
   const pythonCommand = getPythonCommand();
