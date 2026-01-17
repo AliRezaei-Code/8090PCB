@@ -69,6 +69,24 @@ class ApiService {
     const response = await this.client.get('/chat/tools');
     return response.data;
   }
+
+  /**
+   * Validate a PCB design upload
+   */
+  async validatePcb(files) {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    const response = await this.client.post('/pcb/validate', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  }
 }
 
 export default new ApiService();
