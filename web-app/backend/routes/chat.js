@@ -1,5 +1,6 @@
 import express from 'express';
 import mcpClient from '../services/mcpClient.js';
+import { runAgent } from '../services/llmAgent.js';
 
 const router = express.Router();
 
@@ -33,8 +34,29 @@ router.post('/message', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Process the design request through MCP
-    const result = await mcpClient.processDesignRequest(message);
+    let result = null;
+
+    try {
+      const agentResponse = await runAgent({
+        mode: 'chat',
+        message,
+        history,
+      });
+      if (agentResponse?.message) {
+        result = {
+          message: agentResponse.message,
+          files: agentResponse.files || null,
+          designId: agentResponse.design_id || null,
+        };
+      }
+    } catch (error) {
+      console.warn('LlamaIndex agent failed, falling back to mock response:', error.message);
+    }
+
+    // Fallback to mock MCP response if agent is unavailable
+    if (!result) {
+      result = await mcpClient.processDesignRequest(message);
+    }
 
     // Add assistant response to history
     const assistantMessage = {
@@ -42,7 +64,7 @@ router.post('/message', async (req, res) => {
       content: result.message,
       timestamp: new Date().toISOString(),
       files: result.files,
-      designId: result.designId
+      designId: result.designId,
     };
     history.push(assistantMessage);
 

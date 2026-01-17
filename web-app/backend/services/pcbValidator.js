@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { withMcpClient, parseToolTextContent } from './mcpBridge.js';
+import { runAgent } from './llmAgent.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -545,6 +546,37 @@ export async function validateUploadedDesign({ validationId, uploadedFiles }) {
       patterns: patternCount,
     },
   };
+
+  try {
+    const agentResponse = await runAgent({
+      mode: 'validation',
+      context: {
+        summary,
+        project: {
+          projectPath,
+          hasPcb: Boolean(pcbFile),
+          hasSchematic: Boolean(schematicFile),
+        },
+        mcp: {
+          available: mcpAvailable,
+          error: mcpError,
+        },
+        drc: toolResults.drc?.data || null,
+        boundaries: toolResults.boundaries?.data || null,
+        patterns: toolResults.patterns?.data || null,
+        componentSample: componentDescriptions.slice(0, 20),
+      },
+    });
+
+    if (Array.isArray(agentResponse?.summary_notes) && agentResponse.summary_notes.length > 0) {
+      summary.notes = agentResponse.summary_notes;
+    }
+    if (agentResponse?.firmware_overview && typeof agentResponse.firmware_overview === 'string') {
+      firmwarePlan.overview = agentResponse.firmware_overview.trim();
+    }
+  } catch (error) {
+    console.warn('LlamaIndex agent failed for validation pipeline:', error.message);
+  }
 
   const reportMarkdown = formatMarkdownReport(
     summary,
