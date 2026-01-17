@@ -1,7 +1,7 @@
 {
   "name": "8090pcb-backend",
   "version": "1.0.0",
-  "description": "Backend server for 8090PCB firmware planning with Cerebras LLM and KiCad render output",
+  "description": "Backend server for 8090PCB firmware planning with Ollama LLM and KiCad render output",
   "main": "server.js",
   "type": "module",
   "scripts": {
