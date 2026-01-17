@@ -62,3 +62,12 @@ Fix:
 lsof -ti:3000 | xargs kill -9
 lsof -ti:3001 | xargs kill -9
 ```
+
+## UI build fails with "Failed to resolve import framer-motion"
+
+Fix:
+
+```bash
+cd web-app/frontend
+npm install
+```
