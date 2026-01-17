@@ -108,9 +108,9 @@ Limits:
 
 Behavior notes:
 
-- If `.kicad_pro` is present, DRC and boundary checks run.
-- If only `.kicad_sch` is present, netlist and pattern analysis still run.
-- If only `.kicad_pcb` is present, output will be limited to a summary with minimal component data.
+- If `.kicad_pcb` is present, a render is generated.
+- If `.kicad_sch` is present, the LLM has more context for firmware tasks.
+- If only `.kicad_pcb` is present, the plan may be higher-level with fewer component details.
 
 ## Outputs
 
