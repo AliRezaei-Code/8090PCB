@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import FileCard from './FileCard';
+import BackgroundParticles from './BackgroundParticles';
 
 const ACCEPTED_EXTENSIONS = [
   '.kicad_pro',
@@ -173,6 +174,7 @@ const PcbValidator = () => {
   return (
     <div className="min-h-screen">
       <motion.div className="page-shell" initial="hidden" animate="show" variants={pageVariants}>
+        <BackgroundParticles />
         <div className="background-orbit orbit-a" />
         <div className="background-orbit orbit-b" />
         <div className="background-orbit orbit-c" />
