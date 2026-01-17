@@ -1,8 +1,8 @@
 import React from 'react';
-import ChatInterface from './components/ChatInterface';
+import PcbValidator from './components/PcbValidator';
 
 function App() {
-  return <ChatInterface />;
+  return <PcbValidator />;
 }
 
 export default App;
