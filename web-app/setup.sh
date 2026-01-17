@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🚀 8090PCB Chat Interface Setup"
+echo "🚀 8090PCB Firmware Planner Setup"
 echo "================================="
 
 # Colors for output
@@ -37,7 +37,7 @@ cd backend
 if [ ! -f ".env" ]; then
     echo "Creating .env from template..."
     cp .env.example .env
-    echo -e "${GREEN}✓ .env created. Please update with your KiCad project path${NC}"
+    echo -e "${GREEN}✓ .env created. Please update with your Cerebras API key${NC}"
 fi
 
 echo "Installing backend dependencies..."
@@ -62,8 +62,9 @@ echo ""
 echo -e "${GREEN}✓ Setup complete!${NC}"
 echo ""
 echo "Next steps:"
-echo "1. Update backend/.env with your KICAD_MCP_SERVER_PATH (and KICAD_MCP_PYTHON if needed)"
-echo "2. Run: npm run dev (from web-app directory)"
+echo "1. Update backend/.env with CEREBRAS_API_KEY and CEREBRAS_MODEL"
+echo "2. (Optional) Install agent deps: python3 -m venv .agent-venv && source .agent-venv/bin/activate && pip install -r backend/agent/requirements.txt"
+echo "3. Run: npm run dev (from web-app directory)"
 echo ""
 echo "Or run in separate terminals:"
 echo "  Terminal 1: cd backend && npm run dev"
