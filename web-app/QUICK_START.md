@@ -9,7 +9,7 @@ cd web-app
 bash setup.sh
 ```
 
-Then update `.env` in `backend/` with your KiCad project path.
+Then update `.env` in `backend/` with your MCP path (and Python if needed).
 
 ### Option 2: Manual Setup
 
@@ -38,7 +38,7 @@ Edit `web-app/backend/.env`:
 ```env
 PORT=3001
 KICAD_MCP_SERVER_PATH=../../main.py
-KICAD_PROJECT_PATH=/your/kicad/project/path
+KICAD_MCP_PYTHON=/path/to/python
 NODE_ENV=development
 ```
 
@@ -48,27 +48,26 @@ NODE_ENV=development
 
 | Feature | Details |
 |---------|---------|
-| **Chat Interface** | Clean, modern React-based UI |
-| **PCB Generation** | Generate KiCad .kicad_pcb files |
-| **Descriptions** | Auto-generate design specs in Markdown |
-| **MCP Integration** | Connect to KiCad MCP server |
-| **File Download** | One-click download of generated files |
-| **History** | Track design conversations |
+| **Validation UI** | Upload and validate KiCad designs |
+| **DRC + Boundaries** | Uses MCP tools for checks |
+| **Firmware Plan** | Generates bring-up plan and per-component tasks |
+| **Component Notes** | Technical descriptions for each component |
+| **File Download** | One-click download of reports |
 
 ---
 
 ## 📁 File Flows
 
 ```
-User Input (Chat)
+User Upload (KiCad files)
     ↓
-Backend API (/api/chat/message)
+Backend API (/api/pcb/validate)
     ↓
-MCP Client (mcpClient.js)
+MCP Client (mcpBridge.js)
     ↓
 KiCad MCP Server (../../main.py)
     ↓
-Generate Files (CAD + Description)
+Generate Files (Report + Firmware + Component Notes)
     ↓
 Store in /backend/generated/
     ↓
@@ -83,13 +82,12 @@ User Downloads Files
 
 ## 🔧 API Quick Reference
 
-### Send Chat Message
+### Validate PCB Upload
 ```bash
-POST http://localhost:3001/api/chat/message
-{
-  "message": "Design a blink LED circuit",
-  "conversationId": "conv_123" // optional
-}
+curl -X POST http://localhost:3001/api/pcb/validate \
+  -F "files=@/path/to/design.kicad_pro" \
+  -F "files=@/path/to/design.kicad_sch" \
+  -F "files=@/path/to/design.kicad_pcb"
 ```
 
 ### Download File
@@ -97,9 +95,9 @@ POST http://localhost:3001/api/chat/message
 GET http://localhost:3001/api/files/{filename}
 ```
 
-### Get Chat History
+### Download File
 ```
-GET http://localhost:3001/api/chat/history/{conversationId}
+GET http://localhost:3001/api/files/{filename}
 ```
 
 ---
@@ -127,8 +125,8 @@ See [README.md](./README.md) for comprehensive documentation.
 - **Frontend**: React 18 + Vite + Tailwind CSS
 - **Backend**: Express + Node.js
 - **Integration**: KiCad MCP Protocol
-- **File Format**: KiCad PCB (.kicad_pcb) + Markdown
+- **File Format**: Markdown + JSON outputs
 
 ---
 
-**Ready to design!** 🎯
+**Ready to validate!**
