@@ -6,7 +6,7 @@ This document explains how the firmware planning UI is wired and how data moves 
 
 - Frontend (React + Vite): upload UI, output cards, and render view.
 - Backend (Express): file upload handling, LLM orchestration, render generation.
-- LlamaIndex agent (Python): Cerebras-backed firmware plan + PRD summary.
+- LlamaIndex agent (Python): Ollama-backed firmware plan + PRD summary with RAG.
 
 ## Data flow
 
@@ -37,7 +37,7 @@ Browser
 
 - `web-app/backend/services/llmAgent.js`
   - Spawns the LlamaIndex agent for chat/summary generation
-  - Uses `CEREBRAS_API_KEY` and `CEREBRAS_MODEL`
+  - Uses `OLLAMA_LLM_MODEL`, `OLLAMA_EMBED_MODEL`, and `OLLAMA_RERANK_MODEL`
 
 - `web-app/backend/services/kicadRender.js`
   - Invokes `kicad-cli` to export SVG renders
