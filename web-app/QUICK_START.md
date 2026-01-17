@@ -129,7 +129,7 @@ Additional docs are in `web-app/docs/`.
 
 - **Frontend**: React 18 + Vite + Tailwind CSS
 - **Backend**: Express + Node.js
-- **LLM Agent**: LlamaIndex + Cerebras API
+- **LLM Agent**: LlamaIndex + Ollama (RAG)
 
 ---
 
