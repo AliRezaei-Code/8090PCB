@@ -37,7 +37,7 @@ cd backend
 if [ ! -f ".env" ]; then
     echo "Creating .env from template..."
     cp .env.example .env
-    echo -e "${GREEN}✓ .env created. Please update with your Cerebras API key${NC}"
+    echo -e "${GREEN}✓ .env created. Please update with your Ollama model settings${NC}"
 fi
 
 echo "Installing backend dependencies..."
@@ -62,7 +62,7 @@ echo ""
 echo -e "${GREEN}✓ Setup complete!${NC}"
 echo ""
 echo "Next steps:"
-echo "1. Update backend/.env with CEREBRAS_API_KEY and CEREBRAS_MODEL"
+echo "1. Update backend/.env with OLLAMA model settings"
 echo "2. (Optional) Install agent deps: python3 -m venv .agent-venv && source .agent-venv/bin/activate && pip install -r backend/agent/requirements.txt"
 echo "3. Run: npm run dev (from web-app directory)"
 echo ""
