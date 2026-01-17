@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, FileText, File } from 'lucide-react';
+import { Download, FileText, File, FileJson } from 'lucide-react';
 import api from '../services/api';
 
 const FileCard = ({ filename, designId, type }) => {
@@ -15,6 +15,9 @@ const FileCard = ({ filename, designId, type }) => {
     if (filename.endsWith('.md')) {
       return <FileText className="w-6 h-6 text-green-400" />;
     }
+    if (filename.endsWith('.json')) {
+      return <FileJson className="w-6 h-6 text-amber-500" />;
+    }
     return <File className="w-6 h-6 text-gray-400" />;
   };
 
@@ -22,8 +25,20 @@ const FileCard = ({ filename, designId, type }) => {
     if (filename.endsWith('.kicad_pcb')) {
       return 'CAD File (KiCad PCB)';
     }
+    if (filename.endsWith('_report.md')) {
+      return 'Validation Report';
+    }
+    if (filename.endsWith('_firmware_plan.md')) {
+      return 'Firmware Plan';
+    }
+    if (filename.endsWith('_components.md')) {
+      return 'Component Reference';
+    }
     if (filename.endsWith('.md')) {
-      return 'Design Description';
+      return 'Markdown Document';
+    }
+    if (filename.endsWith('_summary.json')) {
+      return 'Validation Summary (JSON)';
     }
     return 'File';
   };
