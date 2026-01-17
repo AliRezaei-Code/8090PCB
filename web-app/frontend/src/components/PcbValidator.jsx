@@ -111,6 +111,15 @@ const PcbValidator = () => {
     },
   };
 
+  const statListVariants = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.02,
+      },
+    },
+  };
+
   const itemVariants = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 12 },
     show: {
@@ -120,6 +129,19 @@ const PcbValidator = () => {
         type: 'spring',
         stiffness: 160,
         damping: 20,
+      },
+    },
+  };
+
+  const statItemVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 8 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 220,
+        damping: 18,
       },
     },
   };
@@ -318,10 +340,16 @@ const PcbValidator = () => {
                   exit="hidden"
                 >
                   <motion.section className="space-y-4" variants={fadeUpVariants}>
-                    <motion.div className="grid gap-4 md:grid-cols-4" layout>
+                    <motion.div
+                      className="grid gap-4 md:grid-cols-4"
+                      layout
+                      variants={statListVariants}
+                      initial="hidden"
+                      animate="show"
+                    >
                       <motion.div
                         className={`stat-card ${statusConfig.tone}`}
-                        variants={itemVariants}
+                        variants={statItemVariants}
                         whileHover={{ y: -4 }}
                       >
                         <StatusIcon className="w-6 h-6" />
@@ -332,7 +360,7 @@ const PcbValidator = () => {
                       </motion.div>
                       <motion.div
                         className="stat-card"
-                        variants={itemVariants}
+                        variants={statItemVariants}
                         whileHover={{ y: -4 }}
                       >
                         <CircuitBoard className="w-6 h-6 text-purple-300" />
@@ -347,7 +375,7 @@ const PcbValidator = () => {
                       </motion.div>
                       <motion.div
                         className="stat-card"
-                        variants={itemVariants}
+                        variants={statItemVariants}
                         whileHover={{ y: -4 }}
                       >
                         <AlertTriangle className="w-6 h-6 text-purple-300" />
@@ -360,7 +388,7 @@ const PcbValidator = () => {
                       </motion.div>
                       <motion.div
                         className="stat-card"
-                        variants={itemVariants}
+                        variants={statItemVariants}
                         whileHover={{ y: -4 }}
                       >
                         <Cpu className="w-6 h-6 text-purple-300" />

@@ -61,6 +61,8 @@ const BackgroundParticles = () => {
       const sinX = Math.sin(tiltX);
       const cosY = Math.cos(tiltY + spin);
       const sinY = Math.sin(tiltY + spin);
+      const lightX = Math.max(-1, Math.min(1, pointerRef.current.x / (width / 2)));
+      const lightY = Math.max(-1, Math.min(1, pointerRef.current.y / (height / 2)));
 
       for (const particle of particlesRef.current) {
         particle.z -= SPEED;
@@ -86,8 +88,22 @@ const BackgroundParticles = () => {
         const alpha = Math.min(1, Math.max(0.25, 1 - depthZ / DEPTH));
         const size = particle.radius * scale * 1.4;
 
+        const highlightX = x2d - lightX * size * 0.6;
+        const highlightY = y2d - lightY * size * 0.6;
+        const gradient = context.createRadialGradient(
+          highlightX,
+          highlightY,
+          size * 0.15,
+          x2d,
+          y2d,
+          size,
+        );
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha * 0.9})`);
+        gradient.addColorStop(0.35, `hsla(${particle.hue}, 80%, 75%, ${alpha * 0.85})`);
+        gradient.addColorStop(1, `hsla(${particle.hue}, 70%, 55%, ${alpha * 0.2})`);
+
         context.beginPath();
-        context.fillStyle = `hsla(${particle.hue}, 70%, 70%, ${alpha})`;
+        context.fillStyle = gradient;
         context.arc(x2d, y2d, size, 0, Math.PI * 2);
         context.fill();
       }

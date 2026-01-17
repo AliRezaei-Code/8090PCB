@@ -25,10 +25,13 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: #140a24;
-  scrollbar-color: #5b21b6 #140a24;
-  scrollbar-width: thin;
   position: relative;
   isolation: isolate;
+}
+
+* {
+  scrollbar-color: #5b21b6 #140a24;
+  scrollbar-width: thin;
 }
 
 body::before {
@@ -45,21 +48,21 @@ body::before {
   pointer-events: none;
 }
 
-body::-webkit-scrollbar {
+*::-webkit-scrollbar {
   width: 10px;
 }
 
-body::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: #140a24;
 }
 
-body::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: #5b21b6;
   border-radius: 0;
   border: 2px solid #140a24;
 }
 
-body::-webkit-scrollbar-thumb:hover {
+*::-webkit-scrollbar-thumb:hover {
   background: #6d28d9;
 }
 
