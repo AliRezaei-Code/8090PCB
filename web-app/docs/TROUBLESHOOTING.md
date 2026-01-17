@@ -10,40 +10,42 @@ Fix:
 - Ensure `npm run dev` is running in `web-app/backend`
 - Confirm `PORT` in `.env` matches the frontend proxy (default 3001)
 
-## MCP server fails to launch
+## LlamaIndex agent fails to launch
 
 Symptoms:
-- Validation returns "MCP unavailable"
-- Backend logs show Python import errors
+- Plan generation returns an error
+- Backend logs show "LlamaIndex agent failed"
 
 Fix:
-- Install Python dependencies from the repo root:
+- Install agent dependencies:
   ```bash
-  python3 -m venv .venv
-  source .venv/bin/activate
-  pip install -e .
+  python3 -m venv .agent-venv
+  source .agent-venv/bin/activate
+  pip install -r web-app/backend/agent/requirements.txt
   ```
-- Set `KICAD_MCP_PYTHON` if you need a specific interpreter
-- Verify `KICAD_MCP_SERVER_PATH` points to `main.py`
+- Set `CEREBRAS_API_KEY` and `CEREBRAS_MODEL` in `web-app/backend/.env`
+- If needed, set `LLAMA_AGENT_PYTHON` to the agent venv python path
 
-## DRC fails
+## Render fails
 
 Symptoms:
-- Report shows DRC errors or missing data
+- PCB render window is blank
+- Notes show "Render failed"
 
 Fix:
-- Install KiCad 9+ and ensure `kicad-cli` is in PATH
+- Install KiCad 9+ and ensure `kicad-cli` is available
 - If on macOS, confirm `kicad-cli` exists in:
   `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`
+- Set `KICAD_CLI_PATH` if KiCad is installed elsewhere
 
-## Empty component list
+## Sparse plan output
 
 Symptoms:
-- Component list is empty or missing
+- Plan or PRD is missing items
 
 Fix:
-- Make sure a schematic file (`.kicad_sch`) was uploaded
-- Verify the schematic file is valid and readable
+- Upload `.kicad_pro`, `.kicad_sch`, and `.kicad_pcb` together
+- Increase `LLM_MAX_FILE_CHARS` / `LLM_MAX_TOTAL_CHARS` if input is large
 
 ## Upload too large
 
@@ -52,7 +54,7 @@ Symptoms:
 
 Fix:
 - Limit to 20 files, 50MB per file
-- Remove large assets not required for validation
+- Remove large assets not required for planning
 
 ## Ports in use
 
