@@ -73,20 +73,3 @@ Fix:
 cd web-app/frontend
 npm install
 ```
-
-## LlamaIndex agent not running
-
-Symptoms:
-- Chat responses fall back to mock output
-- Validation summaries never change
-- Backend logs show "LlamaIndex agent failed"
-
-Fix:
-- Install agent dependencies:
-  ```bash
-  python3 -m venv .agent-venv
-  source .agent-venv/bin/activate
-  pip install -r web-app/backend/agent/requirements.txt
-  ```
-- Set `CEREBRAS_API_KEY` and `CEREBRAS_MODEL` in `web-app/backend/.env`
-- If Cerebras uses a custom base URL, set `CEREBRAS_API_BASE`
