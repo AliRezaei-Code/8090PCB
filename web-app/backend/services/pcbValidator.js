@@ -38,6 +38,7 @@ async function collectFilePayload(files) {
     '.kicad_prl',
     '.kicad_sym',
     '.kicad_mod',
+    '.csv',
   ]);
 
   const metadata = files.map((file) => ({
@@ -231,6 +232,9 @@ export async function validateUploadedDesign({ validationId, uploadedFiles }) {
   }
   if (truncatedFiles.length > 0) {
     notes.push(`Input truncated for: ${truncatedFiles.join(', ')}`);
+  }
+  if (payloadFiles.length === 0) {
+    notes.push('No readable KiCad files were parsed for the LLM.');
   }
 
   let renderResult = null;
