@@ -9,7 +9,7 @@ cd web-app
 bash setup.sh
 ```
 
-Then update `.env` in `backend/` with your MCP path (and Python if needed).
+Then update `backend/.env` with your Cerebras API key and model.
 
 ### Option 2: Manual Setup
 
@@ -19,6 +19,13 @@ cd web-app/backend
 cp .env.example .env
 npm install
 npm run dev
+```
+
+**Agent (new terminal):**
+```bash
+python3 -m venv .agent-venv
+source .agent-venv/bin/activate
+pip install -r web-app/backend/agent/requirements.txt
 ```
 
 **Frontend (new terminal):**
@@ -37,9 +44,11 @@ Visit `http://localhost:3000`
 Edit `web-app/backend/.env`:
 ```env
 PORT=3001
-KICAD_MCP_SERVER_PATH=../../main.py
-KICAD_MCP_PYTHON=/path/to/python
 NODE_ENV=development
+CEREBRAS_API_KEY=your_cerebras_key_here
+CEREBRAS_MODEL=gpt-oss-120b
+KICAD_CLI_PATH=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
+KICAD_RENDER_LAYERS=F.Cu,B.Cu,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts
 ```
 
 ---
@@ -48,11 +57,10 @@ NODE_ENV=development
 
 | Feature | Details |
 |---------|---------|
-| **Validation UI** | Upload and validate KiCad designs |
-| **DRC + Boundaries** | Uses MCP tools for checks |
-| **Firmware Plan** | Generates bring-up plan and per-component tasks |
-| **Component Notes** | Technical descriptions for each component |
-| **File Download** | One-click download of reports |
+| **Firmware Plan** | Generates phased bring-up plan from KiCad files |
+| **PRD Summary** | LLM-generated product requirements summary |
+| **PCB Render** | SVG render via `kicad-cli` |
+| **File Download** | One-click download of outputs |
 
 ---
 
@@ -63,36 +71,29 @@ User Upload (KiCad files)
     ↓
 Backend API (/api/pcb/validate)
     ↓
-MCP Client (mcpBridge.js)
+LlamaIndex Agent (Cerebras)
     ↓
-KiCad MCP Server (../../main.py)
+KiCad CLI Render (SVG)
     ↓
-Generate Files (Report + Firmware + Component Notes)
+Generate Files (Firmware Plan + PRD + Summary)
     ↓
 Store in /backend/generated/
     ↓
 Return Download Links
     ↓
-Frontend displays File Cards
-    ↓
-User Downloads Files
+Frontend displays outputs + render
 ```
 
 ---
 
 ## 🔧 API Quick Reference
 
-### Validate PCB Upload
+### Generate firmware plan
 ```bash
 curl -X POST http://localhost:3001/api/pcb/validate \
   -F "files=@/path/to/design.kicad_pro" \
   -F "files=@/path/to/design.kicad_sch" \
   -F "files=@/path/to/design.kicad_pcb"
-```
-
-### Download File
-```
-GET http://localhost:3001/api/files/{filename}
 ```
 
 ### Download File
@@ -110,7 +111,8 @@ GET http://localhost:3001/api/files/{filename}
 | Port 3001 in use | Kill process: `lsof -ti:3001 \| xargs kill -9` |
 | Module not found | Run `npm install` in that directory |
 | .env file missing | Run `cp .env.example .env` in backend |
-| Can't find MCP server | Update KICAD_MCP_SERVER_PATH in .env |
+| Agent not running | Install `web-app/backend/agent/requirements.txt` |
+| Render fails | Verify `kicad-cli` path or set `KICAD_CLI_PATH` |
 
 ---
 
@@ -125,9 +127,8 @@ Additional docs are in `web-app/docs/`.
 
 - **Frontend**: React 18 + Vite + Tailwind CSS
 - **Backend**: Express + Node.js
-- **Integration**: KiCad MCP Protocol
-- **File Format**: Markdown + JSON outputs
+- **LLM Agent**: LlamaIndex + Cerebras API
 
 ---
 
-**Ready to validate!**
+**Ready to plan firmware!**
