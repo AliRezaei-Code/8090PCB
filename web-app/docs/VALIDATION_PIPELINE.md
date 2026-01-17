@@ -7,13 +7,14 @@ This document explains how the backend turns uploaded KiCad files into a firmwar
 1. Upload files via `POST /api/pcb/validate`.
 2. Backend stores uploads under `backend/uploads/<validationId>`.
 3. Backend reads raw KiCad file content + metadata (size-limited).
-4. Backend calls the LlamaIndex agent (Cerebras) to produce:
+4. Backend calls the LlamaIndex agent (Ollama + RAG) to produce:
    - Firmware implementation plan
    - PRD-ready summary
 5. Backend generates a KiCad SVG render (if `.kicad_pcb` is present).
 6. Files are written to `backend/generated/` and returned to the UI.
 
 Render settings can be adjusted with `KICAD_CLI_PATH` and `KICAD_RENDER_LAYERS`.
+RAG settings can be adjusted with `FIRMWARE_DOCS_DIR`, `FIRMWARE_INDEX_DIR`, and `RAG_CHUNK_SIZE`.
 
 ## LLM plan generation
 
