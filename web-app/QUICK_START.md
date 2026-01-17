@@ -9,7 +9,7 @@ cd web-app
 bash setup.sh
 ```
 
-Then update `backend/.env` with your Cerebras API key and model.
+Then update `backend/.env` with your Ollama model settings.
 
 ### Option 2: Manual Setup
 
@@ -45,8 +45,10 @@ Edit `web-app/backend/.env`:
 ```env
 PORT=3001
 NODE_ENV=development
-CEREBRAS_API_KEY=your_cerebras_key_here
-CEREBRAS_MODEL=gpt-oss-120b
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_LLM_MODEL=gpt-oss:20b
+OLLAMA_EMBED_MODEL=qwen3-embedding:0.6b
+OLLAMA_RERANK_MODEL=sam860/qwen3-reranker:0.6b-F16
 KICAD_CLI_PATH=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
 KICAD_RENDER_LAYERS=F.Cu,B.Cu,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts
 ```
@@ -71,7 +73,7 @@ User Upload (KiCad files)
     ↓
 Backend API (/api/pcb/validate)
     ↓
-LlamaIndex Agent (Cerebras)
+LlamaIndex Agent (Ollama + RAG)
     ↓
 KiCad CLI Render (SVG)
     ↓
