@@ -9,6 +9,45 @@ const __dirname = dirname(__filename);
 const router = express.Router();
 
 /**
+ * GET /api/files/preview/:filename
+ * Preview file content (for text files)
+ */
+router.get('/preview/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    // Security: prevent directory traversal
+    if (filename.includes('..') || filename.includes('/')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    const filePath = join(__dirname, '..', 'generated', filename);
+    
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const content = await fs.readFile(filePath, 'utf-8');
+    
+    res.json({
+      filename,
+      content,
+      size: content.length
+    });
+
+  } catch (error) {
+    console.error('File preview error:', error);
+    res.status(500).json({
+      error: 'Failed to preview file',
+      message: error.message
+    });
+  }
+});
+
+/**
  * GET /api/files/:filename
  * Download generated files
  */
@@ -50,45 +89,6 @@ router.get('/:filename', async (req, res) => {
     console.error('File download error:', error);
     res.status(500).json({
       error: 'Failed to download file',
-      message: error.message
-    });
-  }
-});
-
-/**
- * GET /api/files/preview/:filename
- * Preview file content (for text files)
- */
-router.get('/preview/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    
-    // Security: prevent directory traversal
-    if (filename.includes('..') || filename.includes('/')) {
-      return res.status(400).json({ error: 'Invalid filename' });
-    }
-
-    const filePath = join(__dirname, '..', 'generated', filename);
-    
-    // Check if file exists
-    try {
-      await fs.access(filePath);
-    } catch {
-      return res.status(404).json({ error: 'File not found' });
-    }
-
-    const content = await fs.readFile(filePath, 'utf-8');
-    
-    res.json({
-      filename,
-      content,
-      size: content.length
-    });
-
-  } catch (error) {
-    console.error('File preview error:', error);
-    res.status(500).json({
-      error: 'Failed to preview file',
       message: error.message
     });
   }
