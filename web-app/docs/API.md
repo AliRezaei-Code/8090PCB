@@ -1,0 +1,106 @@
+# Web App API
+
+Base URL (dev): `http://localhost:3001/api`
+
+## POST /pcb/validate
+
+Upload KiCad files and generate firmware planning output.
+
+### Request
+
+- Content type: `multipart/form-data`
+- Field name: `files` (multiple)
+- Recommended files: `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`
+
+Example:
+
+```bash
+curl -X POST http://localhost:3001/api/pcb/validate \
+  -F "files=@/path/to/design.kicad_pro" \
+  -F "files=@/path/to/design.kicad_sch" \
+  -F "files=@/path/to/design.kicad_pcb"
+```
+
+### Response (summary)
+
+```json
+{
+  "success": true,
+  "validationId": "validation_1700000000000",
+  "summary": {
+    "validationId": "validation_1700000000000",
+    "notes": ["Render failed: ..."],
+    "counts": {
+      "files": 3,
+      "bytes": 104857
+    }
+  },
+  "firmwarePlan": {
+    "overview": "..."
+  },
+  "prd": {
+    "productBrief": "..."
+  },
+  "files": {
+    "firmwarePlan": "validation_1700000000000_firmware_plan.md",
+    "prd": "validation_1700000000000_prd.md",
+    "render": "validation_1700000000000_render.svg",
+    "summary": "validation_1700000000000_summary.json"
+  }
+}
+```
+
+### Error response
+
+```json
+{
+  "error": "Failed to validate design",
+  "message": "..."
+}
+```
+
+## GET /files/:filename
+
+Download a generated file from `backend/generated`.
+
+## GET /files/preview/:filename
+
+Preview a generated text file (markdown or json). Returns:
+
+```json
+{
+  "filename": "validation_..._firmware_plan.md",
+  "content": "...",
+  "size": 1024
+}
+```
+
+## GET /files
+
+List all generated files:
+
+```json
+{
+  "files": [
+    {
+      "filename": "validation_..._firmware_plan.md",
+      "size": 1234,
+      "created": "...",
+      "modified": "..."
+    }
+  ]
+}
+```
+
+## Legacy endpoints
+
+- `/api/chat/*` remains for the older chat UI but is not used by the validator.
+
+## Frontend dependency note
+
+The validator UI uses `framer-motion` for animations. If you update `web-app/frontend/package.json`, run:
+
+```bash
+cd web-app/frontend
+npm install
+```
